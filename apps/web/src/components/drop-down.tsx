@@ -10,23 +10,19 @@ const Dropdown = () => {
   const categories = [
     {
       name: "All",
-      target: "/all",
+      target: "/all-products",
     },
     {
-      name: "Men's Fashion",
-      target: "/",
+      name: "Women’s Backpack",
+      target: "/women-bacgpack",
     },
     {
-      name: "Accessories",
-      target: "/",
+      name: "Baby products",
+      target: "/baby-products",
     },
     {
-      name: "Electronics",
-      target: "/",
-    },
-    {
-      name: "Footwear",
-      target: "/",
+      name: "Mobile Accessories",
+      target: "/mobile-accessories",
     },
   ];
 
@@ -35,7 +31,7 @@ const Dropdown = () => {
       <button onClick={() => setIsOpen(!isOpen)}>
         <div
           className={cn(
-            "flex items-center justify-center cursor-pointer  text-secondary-foreground  transition-colors duration-200 hover:text-primary-foreground",
+            "flex items-center justify-center cursor-pointer text-secondary-foreground  transition-colors duration-200 hover:text-primary-foreground",
             isOpen && "text-primary-foreground"
           )}
         >
@@ -44,7 +40,7 @@ const Dropdown = () => {
         </div>
       </button>
       {isOpen && (
-        <div className="absolute lg:top-full -top-4 lg:left-0 left-30 mt-5 w-fit bg-primary-background/50 backdrop-blur-md  rounded-lg overflow-hidden z-50">
+        <div className="absolute lg:top-full -top-4 lg:left-0 left-30 mt-5 w-fit bg-primary-background  rounded-lg overflow-hidden z-50">
           <div className="rounded-lg">
             {categories.map((category) => (
               <div key={category.name} className=" flex">

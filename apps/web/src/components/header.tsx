@@ -19,19 +19,21 @@ export const Header = () => {
       <div className="bg-primary-background/30 fixed top-0 left-0 z-50 container hidden h-16 max-w-[88rem] grid-cols-12 px-8 backdrop-blur-md lg:grid">
         <Link href="/" className="col-span-2 flex items-center gap-2">
           <Image
-            src="https://img.freepik.com/free-vector/colorful-bird-illustration-gradient_343694-1741.jpg?uid=R187419696&ga=GA1.1.2024461579.1739531165&semt=ais_hybrid"
+            src="/media/logo.webp"
             alt="logo"
             width={28}
             height={28}
             className="rounded-lg dark:invert"
           />
           <div className="-mb-1 flex items-end gap-1">
-            <h1 className="text-primary-foreground text-2xl font-semibold">
-              Qivee
-            </h1>
-            <p className=" text-secondary-foreground mb-1 rounded-md px-[2px] text-sm font-light">
-              <i className="ri-shopping-bag-3-line"></i>
-            </p>
+            <div className="-mb-1 flex items-end gap-1">
+              <h1 className="text-primary-foreground text-2xl font-semibold">
+                Qivee
+              </h1>
+              <p className=" text-secondary-foreground mb-1 rounded-md px-[2px] text-sm font-light">
+                <i className="ri-shopping-bag-3-line"></i>
+              </p>
+            </div>
           </div>
         </Link>
         <div className="col-span-8 flex items-center gap-8 px-4 text-[15px] font-semibold">
@@ -84,7 +86,7 @@ export const Header = () => {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex h-fit gap-2">
               <Image
-                src="https://img.freepik.com/free-vector/colorful-bird-illustration-gradient_343694-1741.jpg?uid=R187419696&ga=GA1.1.2024461579.1739531165&semt=ais_hybrid"
+                src="/media/logo.webp"
                 alt="logo"
                 width={28}
                 height={28}
@@ -110,19 +112,19 @@ export const Header = () => {
             <Dropdown />
             <Link
               href="/new-arrivals"
-              className="text-primary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
+              className="text-secondary-foreground  transition-colors duration-200 hover:cursor-pointer"
             >
               New Arrivals
             </Link>
             <Link
               href="/trending"
-              className="text-primary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
+              className="text-secondary-foreground transition-colors duration-200 hover:cursor-pointer"
             >
               Trending
             </Link>
             <Link
               href="/accesories"
-              className="text-primary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
+              className="text-secondary-foreground transition-colors duration-200 hover:cursor-pointer"
             >
               Accesories
             </Link>
@@ -152,7 +154,7 @@ export const Header = () => {
         <div className="bg-primary-background/30 fixed top-0 z-50 flex w-full items-center justify-between p-4 backdrop-blur-md transition-all duration-400 lg:hidden">
           <Link href="/" className="col-span-2 flex items-center gap-2">
             <Image
-              src="https://img.freepik.com/free-vector/colorful-bird-illustration-gradient_343694-1741.jpg?uid=R187419696&ga=GA1.1.2024461579.1739531165&semt=ais_hybrid"
+              src="/media/logo.webp"
               alt="logo"
               width={28}
               height={28}
@@ -164,16 +166,6 @@ export const Header = () => {
           </button>
         </div>
       )}
-
-      {/* {isDialogOpen && (
-        <div className="bg-primary-background/30 fixed inset-0 z-40 backdrop-blur-md"></div>
-      )} */}
-
-      {/* <SearchBox
-                isDialogOpen={isDialogOpen}
-                setIsDialogOpen={setIsDialogOpen}
-                className="fixed top-[33%] left-[50%] z-50 -translate-x-1/2"
-            /> */}
     </div>
   );
 };
