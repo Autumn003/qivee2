@@ -11,7 +11,7 @@ export default function Home() {
       description: "Carry your essentials in style with our premium backpacks.",
       cta: {
         text: "Shop Now",
-        link: "#",
+        link: "/products?category=women-bagpacks",
       },
     },
     {
@@ -21,7 +21,7 @@ export default function Home() {
         "Enhance your mobile experience with top-quality accessories.",
       cta: {
         text: "Explore Collection",
-        link: "#",
+        link: "/products?category=mobile-accessories",
       },
     },
     {
@@ -30,7 +30,7 @@ export default function Home() {
       description: "Ensure comfort and care with our premium baby products.",
       cta: {
         text: "Explore Collection",
-        link: "#",
+        link: "/products?category=baby-products",
       },
     },
   ];
@@ -43,17 +43,17 @@ export default function Home() {
     {
       name: "Women Bagpacks",
       image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
-      target: "women-bagpacks",
+      target: "/products?category=women-bagpacks",
     },
     {
       name: "Mobile Accessories",
       image: "https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93",
-      target: "mobile-accessories",
+      target: "/products?category=mobile-accessories",
     },
     {
       name: "Baby Products",
       image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
-      target: "baby-products",
+      target: "/products?category=baby-products",
     },
   ];
 

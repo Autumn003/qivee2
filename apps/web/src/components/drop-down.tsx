@@ -14,15 +14,15 @@ const Dropdown = () => {
     },
     {
       name: "Women’s Backpack",
-      target: "/women-bacgpack",
+      target: "/products?category=women-bagpacks",
     },
     {
       name: "Baby products",
-      target: "/baby-products",
+      target: "/products?category=baby-products",
     },
     {
       name: "Mobile Accessories",
-      target: "/mobile-accessories",
+      target: "/products?category=mobile-accessories",
     },
   ];
 
