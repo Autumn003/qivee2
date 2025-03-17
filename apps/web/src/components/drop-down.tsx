@@ -10,7 +10,7 @@ const Dropdown = () => {
   const categories = [
     {
       name: "All",
-      target: "/all-products",
+      target: "/products",
     },
     {
       name: "Women’s Backpack",

@@ -38,7 +38,7 @@ export default function Home() {
     {
       name: "All",
       image: "https://images.unsplash.com/photo-1488161628813-04466f872be2",
-      target: "all-products",
+      target: "/products",
     },
     {
       name: "Women Bagpacks",
