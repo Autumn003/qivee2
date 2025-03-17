@@ -24,7 +24,7 @@ export default function RootLayout({
       >
         <div className="fixed inset-0 -z-50" />
         <Header />
-        <div className="mt-16 container">{children}</div>
+        <div className="mt-16 ">{children}</div>
         <Footer />
       </body>
     </html>
