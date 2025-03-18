@@ -20,7 +20,7 @@ const products = [
     id: 2,
     name: "Leather Messenger Bag",
     price: 89.99,
-    category: "women-bagpacks",
+    category: "women's-bagpack",
     image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
     description:
       "Handcrafted leather messenger bag perfect for daily use and business meetings.",

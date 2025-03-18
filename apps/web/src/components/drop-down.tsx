@@ -22,7 +22,7 @@ const Dropdown = ({
     },
     {
       name: "Women’s Backpack",
-      target: "/products?category=women-bagpacks",
+      target: "/products?category=women's-bagpack",
     },
     {
       name: "Baby products",
