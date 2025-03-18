@@ -317,7 +317,11 @@ export default function Product() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
-            <Link href="/" key={product.id} className="group">
+            <Link
+              href={`/products/${product.id}`}
+              key={product.id}
+              className="group"
+            >
               <FeaturedCard
                 title={product.name}
                 imageURL={product.image}

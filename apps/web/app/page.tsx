@@ -1,3 +1,4 @@
+import { FeaturedCard } from "@/components";
 import { Carousel } from "@/components/carousel";
 import { PrismaClient } from "@repo/db/client";
 import Link from "next/link";
@@ -59,21 +60,25 @@ export default function Home() {
 
   const featuredProducts = [
     {
+      id: 1,
       name: "Classic White Sneakers",
       price: 89.99,
       image: "https://images.unsplash.com/photo-1491553895911-0055eca6402d",
     },
     {
+      id: 2,
       name: "Leather Tote Bag",
       price: 129.99,
       image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa",
     },
     {
+      id: 3,
       name: "Minimal Watch",
       price: 199.99,
       image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314",
     },
     {
+      id: 4,
       name: "Silk Summer Dress",
       price: 159.99,
       image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
@@ -120,19 +125,16 @@ export default function Home() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
-            <Link href="/" key={product.name} className="group">
-              <div className="relative mb-4 rounded-lg overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <button className="absolute top-4 right-4 bg-white/30 text-white backdrop-blur-2xl h-10 w-10 rounded-full opacity-0 group-hover:opacity-100  hover:text-red-500 cursor-pointer hover:bg-red-400/30 transition-all duration-200">
-                  <i className="ri-poker-hearts-line text-xl"></i>
-                </button>
-              </div>
-              <h3 className="font-medium mb-2">{product.name}</h3>
-              <p className="text-secondary-foreground">${product.price}</p>
+            <Link
+              href={`/products/${product.id}`}
+              key={product.id}
+              className="group"
+            >
+              <FeaturedCard
+                title={product.name}
+                imageURL={product.image}
+                price={product.price}
+              />
             </Link>
           ))}
         </div>
