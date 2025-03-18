@@ -175,7 +175,7 @@ export default function Home() {
           <p className="text-gray-600 mb-6">
             Get 10% off your first order and stay updated with the latest trends
           </p>
-          <form className="flex gap-4">
+          <form className="flex md:flex-row flex-col gap-4">
             <input
               type="email"
               placeholder="Enter your email"

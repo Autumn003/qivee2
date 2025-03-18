@@ -1,8 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import ProductCard from "./product-card";
+import Dropdown from "./drop-down";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const products = [
   {
@@ -52,11 +54,8 @@ const products = [
   },
 ];
 
-const categories = [...new Set(products.map((product) => product.category))];
-
 const Products = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const selectedCategory = searchParams.get("category") || "All";
 
   const filteredProducts =
@@ -64,44 +63,49 @@ const Products = () => {
       ? products
       : products.filter((product) => product.category === selectedCategory);
 
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const scrollHandle = () => {
+      if (window.scrollY > lastScrollY) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+
+    window.addEventListener("scroll", scrollHandle);
+    return () => window.removeEventListener("scroll", scrollHandle);
+  }, [lastScrollY]);
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Our Products</h1>
+        <h1 className="text-3xl text-center font-bold text-secondary-foreground mb-8">
+          Our Products
+        </h1>
 
-        {/* Category Filter */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/products"
-              className={`px-4 py-2 rounded-full ${
-                selectedCategory === "All"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              } transition-colors`}
-            >
-              All
-            </Link>
-            {categories.map((category) => (
-              <Link
-                key={category}
-                href={`/products?category=${category}`}
-                className={`px-4 py-2 rounded-full ${
-                  selectedCategory === category
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                } transition-colors`}
-              >
-                {category}
-              </Link>
-            ))}
-          </div>
+        <div
+          className={cn(
+            "sticky mb-8 top-20 z-10 bg-muted-background/30 backdrop-blur-lg w-fit rounded-2xl px-4 py-2 h-fit flex items-center transition-all duration-300",
+            isVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-10"
+          )}
+        >
+          <Dropdown className="flex" showcategory={true} />
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
+            <ProductCard
+              className="md:my-5 my-2"
+              key={product.id}
+              {...product}
+            />
           ))}
         </div>
       </div>

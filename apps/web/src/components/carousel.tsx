@@ -37,8 +37,6 @@ export function Carousel({
     return () => clearInterval(slideInterval);
   }, [next, autoSlideInterval, currentIndex]);
 
-  console.log(slides);
-
   return (
     <div
       className={cn(`relative w-full h-full group overflow-hidden`, className)}

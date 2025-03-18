@@ -2,10 +2,18 @@
 
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const Dropdown = () => {
+const Dropdown = ({
+  className,
+  showcategory = false,
+}: {
+  className?: string;
+  showcategory?: boolean;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const categories = [
     {
@@ -26,8 +34,21 @@ const Dropdown = () => {
     },
   ];
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   return (
-    <div className="relative">
+    <div className={cn("relative", className)} ref={dropdownRef}>
       <button onClick={() => setIsOpen(!isOpen)}>
         <div
           className={cn(
@@ -39,6 +60,7 @@ const Dropdown = () => {
           <i className="ri-arrow-down-s-line mx-1"></i>
         </div>
       </button>
+      {showcategory && <p>{currentCategory}</p>}
       {isOpen && (
         <div className="absolute lg:top-full -top-4 lg:left-0 left-30 mt-5 w-fit bg-primary-background  rounded-lg overflow-hidden z-50">
           <div className="rounded-lg">
@@ -47,6 +69,10 @@ const Dropdown = () => {
                 <Link
                   href={category.target}
                   className="w-full text-left px-4 py-1 my-1  text-sm text-secondary-foreground   hover:text-primary-foreground transition-colors duration-150"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setCurrentCategory(category.name);
+                  }}
                 >
                   <Link href={category.target}>{category.name}</Link>
                 </Link>
