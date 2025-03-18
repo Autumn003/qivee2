@@ -5,6 +5,7 @@ import ThemeToggler from "./theme-toggler";
 import ProductCard from "./product-card";
 import FeaturedCard from "./featured-card";
 import Product from "./product";
+import Cart from "./cart";
 
 export {
   Header,
@@ -14,4 +15,5 @@ export {
   ProductCard,
   FeaturedCard,
   Product,
+  Cart,
 };

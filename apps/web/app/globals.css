@@ -24,7 +24,7 @@
   --color-muted-background: hsl(var(--muted-background));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
-  --color-destructive-background: hsl(var(--destructive-background));
+  --color-destructive: hsl(var(--destructive));
 
   --font-sans:
     var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -63,7 +63,7 @@
     --primary-foreground: 240, 10%, 4%;
     --secondary-foreground: 240, 5%, 26%;
 
-    --destructive-background: 0 100% 50%;
+    --destructive: 0 100% 50%;
   }
 
   .dark {
@@ -76,7 +76,7 @@
     --primary-foreground: 0, 0%, 100%;
     --secondary-foreground: 0, 0%, 63%;
 
-    --destructive-background: 0 63% 31%;
+    --destructive: 0 63% 31%;
   }
 }
 
