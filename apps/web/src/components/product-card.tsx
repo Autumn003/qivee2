@@ -35,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         className
       )}
     >
-      <Link href={`/product/${id}`}>
+      <Link href={`/products/${id}`}>
         <img src={image} alt={name} className="w-full h-48 object-cover" />
         <div className="p-4">
           <span
