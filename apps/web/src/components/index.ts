@@ -6,6 +6,7 @@ import ProductCard from "./product-card";
 import FeaturedCard from "./featured-card";
 import Product from "./product";
 import Cart from "./cart";
+import Checkout from "./checkout";
 
 export {
   Header,
@@ -16,4 +17,5 @@ export {
   FeaturedCard,
   Product,
   Cart,
+  Checkout,
 };
