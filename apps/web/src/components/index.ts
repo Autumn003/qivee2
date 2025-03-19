@@ -7,6 +7,7 @@ import FeaturedCard from "./featured-card";
 import Product from "./product";
 import Cart from "./cart";
 import Checkout from "./checkout";
+import Orders from "./orders";
 
 export {
   Header,
@@ -18,4 +19,5 @@ export {
   Product,
   Cart,
   Checkout,
+  Orders,
 };
