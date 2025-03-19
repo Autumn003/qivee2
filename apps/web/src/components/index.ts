@@ -8,6 +8,7 @@ import Product from "./product";
 import Cart from "./cart";
 import Checkout from "./checkout";
 import Orders from "./orders";
+import Dashboard from "./dashboard";
 
 export {
   Header,
@@ -20,4 +21,5 @@ export {
   Cart,
   Checkout,
   Orders,
+  Dashboard,
 };
