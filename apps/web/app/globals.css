@@ -24,6 +24,8 @@
   --color-muted-background: hsl(var(--muted-background));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
+  --color-late-background: hsl(var(--late-background));
+
   --color-destructive: hsl(var(--destructive));
 
   --font-sans:
@@ -63,6 +65,8 @@
     --primary-foreground: 240, 10%, 4%;
     --secondary-foreground: 240, 5%, 26%;
 
+    --late-background: 38, 33%, 95%;
+
     --destructive: 0 100% 50%;
   }
 
@@ -75,6 +79,8 @@
 
     --primary-foreground: 0, 0%, 100%;
     --secondary-foreground: 0, 0%, 63%;
+
+    --late-background: 233, 31%, 5%;
 
     --destructive: 0 63% 31%;
   }
