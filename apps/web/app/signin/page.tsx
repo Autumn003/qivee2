@@ -7,6 +7,7 @@ import * as z from "zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createUser } from "actions/user.action";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -73,14 +74,59 @@ export default function AuthPage() {
     }
   };
 
+  // const onRegisterSubmit = async (data: RegisterFormValues) => {
+  //   try {
+  //     setIsLoading(true);
+
+  //     const formData = new FormData();
+  //     formData.append("name", data.name);
+  //     formData.append("email", data.email);
+  //     formData.append("password", data.password);
+  //     formData.append("confirmPassword", data.confirmPassword);
+
+  //     const res = await createUser(formData);
+
+  //     if (res.error) {
+  //       console.log("Registration Error: ", res.error);
+  //     }
+
+  //     console.log("Registration success");
+  //     router.push("/");
+  //   } catch (error) {
+  //     console.error("Registration error:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const onRegisterSubmit = async (data: RegisterFormValues) => {
     try {
       setIsLoading(true);
-      // Handle registration logic here
-      // After successful registration, you might want to automatically sign in the user
-      console.log("signin success");
 
-      router.push("/");
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+      formData.append("confirmPassword", data.confirmPassword);
+
+      const response = await createUser(formData);
+
+      if (response?.error) {
+        console.error("Registration error:", response.error);
+        return;
+      }
+
+      const loginResult = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+      if (loginResult?.error) {
+        console.error("Login failed after registration:", loginResult.error);
+        return;
+      }
+
+      router.push("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
     } finally {
