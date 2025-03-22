@@ -1,5 +1,6 @@
 import db from "@repo/db/client";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcrypt";
 
 export const authOptions = {
@@ -18,6 +19,7 @@ export const authOptions = {
         if (!user) {
           throw new Error("User not found");
         }
+
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password
@@ -28,7 +30,16 @@ export const authOptions = {
         return user;
       },
     }),
+    // GoogleProvider({
+    //   clientId: process.env.GOOGLE_CLIENT_ID || "",
+    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    // }),
   ],
+  // secret: process.env.JWT_SECRET || "secret",
+
+  pages: {
+    signIn: "/signin",
+  },
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
@@ -50,7 +61,6 @@ export const authOptions = {
     },
   },
 
-  // secret: process.env.JWT_SECRET || "secret",
   // callbacks: {
   //   // TODO: can u fix the type here? Using any is bad
   //   async session({ token, session }: any) {
