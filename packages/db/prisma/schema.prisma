@@ -14,9 +14,56 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String  @unique
+  id          String      @id @default(uuid())
   name        String 
-  number      String?  @unique
+  email       String      @unique
   password    String
+  number      String?     @unique
+  image       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orders      Order[]
 }
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  price       Decimal
+  stock       Int
+  image       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  tatalPrice  Decimal
+  status      OrderStatus @default(PROCESSING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String
+  user         User       @relation(fields: [userId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model OrderItem {
+  id          String      @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    String
+  price       Decimal
+  order       Order       @relation(fields: [orderId], references: [id])
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+
+enum OrderStatus{
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+
