@@ -4,6 +4,8 @@ import { Inter } from "next/font/google";
 import { Header } from "../src/components/header";
 import Footer from "@/components/footer";
 
+import { Providers } from "./providers";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,14 +21,16 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning lang="en" className="dark ">
-      <body
-        className={`${inter.className} text-primary-foreground custom-scrollbar`}
-      >
-        <div className="fixed inset-0 -z-50" />
-        <Header />
-        <div className="mt-16 ">{children}</div>
-        <Footer />
-      </body>
+      <Providers>
+        <body
+          className={`${inter.className} text-primary-foreground custom-scrollbar`}
+        >
+          <div className="fixed inset-0 -z-50" />
+          <Header />
+          <div className="mt-16 ">{children}</div>
+          <Footer />
+        </body>
+      </Providers>
     </html>
   );
 }

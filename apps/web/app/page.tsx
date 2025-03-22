@@ -1,8 +1,7 @@
 import { FeaturedCard } from "@/components";
 import { Carousel } from "@/components/carousel";
-import { PrismaClient } from "@repo/db/client";
+import db from "@repo/db/client";
 import Link from "next/link";
-const client = new PrismaClient();
 
 export default function Home() {
   const heroSlides = [
