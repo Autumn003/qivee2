@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { User } from "next-auth";
 
 interface UserProfile {
-  name: string;
-  email: string;
   avatar?: string;
   memberSince: string;
 }
@@ -30,8 +30,6 @@ interface RecentOrder {
 
 // Example data
 const userProfile: UserProfile = {
-  name: "John Doe",
-  email: "john.doe@example.com",
   // avatar:
   //   "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
   memberSince: "2024-01-15",
@@ -79,6 +77,9 @@ const recentOrders: RecentOrder[] = [
 ];
 
 export default function Dashboard() {
+  const { data: session } = useSession();
+  const user = session?.user ?? ({} as User);
+
   const [activeTab, setActiveTab] = useState<"overview" | "profile">(
     "overview"
   );
@@ -106,7 +107,7 @@ export default function Dashboard() {
               {userProfile.avatar ? (
                 <img
                   src={userProfile.avatar}
-                  alt={userProfile.name}
+                  alt={user?.name || ""}
                   className="h-15 w-15 rounded-full object-cover"
                 />
               ) : (
@@ -116,7 +117,7 @@ export default function Dashboard() {
 
             <div className="ml-4">
               <h1 className="text-2xl font-bold text-foreground">
-                {userProfile.name}
+                {user.name}
               </h1>
               <p className="text-sm text-secondary-foreground">
                 Member since{" "}
@@ -128,7 +129,10 @@ export default function Dashboard() {
             <button className="px-4 py-2 mr-2 bg-primary-foreground border-2 border-primary-foreground hover:border-primary-foreground/80 text-primary-background rounded-lg hover:bg-primary-foreground/80 cursor-pointer transition-all duration-150">
               Edit Profile
             </button>
-            <button className="px-4 py-2 text-destructive border-2 border-destructive rounded-lg font-medium hover:bg-destructive hover:text-white cursor-pointer">
+            <button
+              onClick={() => signOut()}
+              className="px-4 py-2 text-destructive border-2 border-destructive rounded-lg font-medium hover:bg-destructive hover:text-white cursor-pointer"
+            >
               Sign Out
             </button>
           </div>
@@ -287,13 +291,13 @@ export default function Dashboard() {
                   <label className="text-sm text-secondary-foreground">
                     Full Name
                   </label>
-                  <p className="mt-1 font-medium">{userProfile.name}</p>
+                  <p className="mt-1 font-medium">{user.name}</p>
                 </div>
                 <div>
                   <label className="text-sm text-secondary-foreground">
                     Email
                   </label>
-                  <p className="mt-1 font-medium">{userProfile.email}</p>
+                  <p className="mt-1 font-medium">{user.email}</p>
                 </div>
               </div>
             </div>
