@@ -74,7 +74,7 @@ export const Header = () => {
             <i className="ri-shopping-cart-line"></i>
           </Link>
           <Link
-            href="/profile"
+            href="/dashboard"
             className="text-secondary-foreground hover:text-primary-foreground text-2xl transition-colors duration-200 hover:cursor-pointer"
           >
             <i className="ri-user-line"></i>
