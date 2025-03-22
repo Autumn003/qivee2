@@ -9,6 +9,7 @@ import Cart from "./cart";
 import Checkout from "./checkout";
 import Orders from "./orders";
 import Dashboard from "./dashboard";
+import Auth from "./auth";
 
 export {
   Header,
@@ -22,4 +23,5 @@ export {
   Checkout,
   Orders,
   Dashboard,
+  Auth,
 };
