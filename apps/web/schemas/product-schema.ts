@@ -19,7 +19,9 @@ export const productSchema = z.object({
   images: z
     .array(z.string().url("Invalid image URL"))
     .min(1, "At least one image is required"),
-  category: z.string().min(1, "Category is required"),
+  category: z.enum(["baby_products", "mobile_accessories", "women_bagpacks"], {
+    errorMap: () => ({ message: "Invalid category" }),
+  }),
   createdAt: z
     .union([z.date(), z.string()])
     .transform((val) => new Date(val))

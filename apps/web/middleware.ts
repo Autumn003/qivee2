@@ -9,8 +9,8 @@ export async function middleware(request: NextRequest) {
 
   if (
     token &&
-    (url.pathname.startsWith("/admin") ||
-      url.pathname.startsWith("/api/admin") ||
+    // url.pathname.startsWith("/admin") ||
+    (url.pathname.startsWith("/api/admin") ||
       url.pathname.startsWith("/signin") ||
       url.pathname.startsWith("/signup"))
   ) {
@@ -31,6 +31,6 @@ export const config = {
     "/signup",
     "/dashboard/:path*",
     "/admin/:pathname*",
-    "/api/admin/:pathname*",
+    // "/api/admin/:pathname*",
   ],
 };

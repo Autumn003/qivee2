@@ -5,11 +5,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { productSchema } from "schemas/product-schema";
-import { createProduct, getAllProducts } from "actions/product.action";
+import {
+  createProduct,
+  deleteProduct,
+  getAllProducts,
+  updateProduct,
+} from "actions/product.action";
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
-export default function AdminProductsPage() {
+export default function AdminProducts() {
   const [products, setProducts] = useState<ProductFormValues[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] =
@@ -37,7 +42,7 @@ export default function AdminProductsPage() {
       name: "",
       description: "",
       price: 0,
-      category: "",
+      category: "baby_products",
       stock: 1,
       images: [],
     },
@@ -50,7 +55,7 @@ export default function AdminProductsPage() {
       name: "",
       description: "",
       price: 0,
-      category: "",
+      category: "baby_products",
       stock: 1,
       images: [],
     });
@@ -59,37 +64,41 @@ export default function AdminProductsPage() {
   const onSubmit = async (data: ProductFormValues) => {
     try {
       setIsLoading(true);
+
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("description", data.description);
+      formData.append("price", String(data.price));
+      formData.append("category", data.category);
+      formData.append("stock", String(data.stock));
+
+      // Append images properly
+      if (data.images.length > 0) {
+        data.images.forEach((image) => {
+          formData.append("images[]", image);
+        });
+      }
+
       if (editingProduct) {
-        // Update existing product
+        const response = await updateProduct(editingProduct.id || "", formData);
+
+        if (response.error) {
+          console.error("Error while updating product: ", response.error);
+          return;
+        }
+
         setProducts((prev) =>
           prev.map((p) =>
-            p.id === editingProduct.id
-              ? { ...p, ...data, price: data.price, stock: data.stock }
-              : p
+            p.id === editingProduct.id ? response.updatedProduct : p
           )
         );
       } else {
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("description", data.description);
-        formData.append("price", String(data.price)); // Convert number to string
-        formData.append("category", data.category);
-        formData.append("stock", String(data.stock)); // Convert number to string
-
-        // Append images properly
-        if (data.images.length > 0) {
-          data.images.forEach((image) => {
-            formData.append("images[]", image);
-          });
-        }
-
         const response = await createProduct(formData);
 
         if (response.error) {
           console.error("Validation Error:", response.error);
           return;
         }
-        //@ts-ignore
         setProducts((prev) => [response.product, ...prev]);
       }
 
@@ -117,9 +126,8 @@ export default function AdminProductsPage() {
   const handleDelete = async (id: string) => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      //@ts-ignore
+      await deleteProduct(id);
+
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setDeleteConfirmId(null);
     } catch (error) {
@@ -204,7 +212,9 @@ export default function AdminProductsPage() {
                         <div>
                           <h3 className="font-medium">{product.name}</h3>
                           <p className="text-sm text-secondary-foreground">
-                            {product.category}
+                            {product.category
+                              .replace(/_/g, " ")
+                              .replace(/\b\w/g, (c) => c.toUpperCase())}
                           </p>
                         </div>
                       </div>
@@ -377,10 +387,16 @@ export default function AdminProductsPage() {
                         <label className="block text-sm font-medium mb-1">
                           Category
                         </label>
-                        <input
+                        <select
                           {...form.register("category")}
-                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
-                        />
+                          className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-primary-background"
+                        >
+                          <option value="baby_products">Baby Products</option>
+                          <option value="mobile_accessories">
+                            Mobile Accessories
+                          </option>
+                          <option value="women_bagpacks">Women Bagpacks</option>
+                        </select>
                         {form.formState.errors.category && (
                           <p className="mt-1 text-sm text-destructive">
                             {form.formState.errors.category.message}
