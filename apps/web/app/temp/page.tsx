@@ -1,375 +1,472 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Github, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { productSchema } from "schemas/product-schema";
+import { createProduct, getAllProducts } from "actions/product.action";
 
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
+type ProductFormValues = z.infer<typeof productSchema>;
 
-const registerSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+export default function AdminProductsPage() {
+  const [products, setProducts] = useState<ProductFormValues[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] =
+    useState<ProductFormValues | null>(null);
 
-type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
-  const [showPassword, setShowPassword] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  useEffect(() => {
+    async function fetchProducts() {
+      const response = await getAllProducts();
+      if (response.success) {
+        setProducts(response.products);
+      } else {
+        console.error("Failed to fetch products:", response.error);
+      }
+    }
+    fetchProducts();
+  }, []);
 
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
+      description: "",
+      price: 0,
+      category: "",
+      stock: 1,
+      images: [],
     },
   });
 
-  const onLoginSubmit = async (data: LoginFormValues) => {
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProduct(null);
+    form.reset({
+      name: "",
+      description: "",
+      price: 0,
+      category: "",
+      stock: 1,
+      images: [],
+    });
+  };
+
+  const onSubmit = async (data: ProductFormValues) => {
     try {
       setIsLoading(true);
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-      });
+      if (editingProduct) {
+        // Update existing product
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === editingProduct.id
+              ? { ...p, ...data, price: data.price, stock: data.stock }
+              : p
+          )
+        );
+      } else {
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("description", data.description);
+        formData.append("price", String(data.price)); // Convert number to string
+        formData.append("category", data.category);
+        formData.append("stock", String(data.stock)); // Convert number to string
 
-      if (result?.error) {
-        throw new Error(result.error);
+        // Append images properly
+        if (data.images.length > 0) {
+          data.images.forEach((image) => {
+            formData.append("images[]", image);
+          });
+        }
+
+        const response = await createProduct(formData);
+
+        if (response.error) {
+          console.error("Validation Error:", response.error);
+          return;
+        }
+        //@ts-ignore
+        setProducts((prev) => [response.product, ...prev]);
       }
 
-      router.push("/dashboard");
+      handleCloseModal();
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Error saving product:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRegisterSubmit = async (data: RegisterFormValues) => {
+  const handleEdit = (product: (typeof products)[0]) => {
+    setEditingProduct(product);
+    form.reset({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      stock: product.stock,
+      images: product.images,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
     try {
       setIsLoading(true);
-      // Handle registration logic here
-      // After successful registration, you might want to automatically sign in the user
-      router.push("/dashboard");
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      //@ts-ignore
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      setDeleteConfirmId(null);
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Error deleting product:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
-            Welcome to Qivee
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your one-stop shop for premium footwear
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-border">
+    <div className="min-h-screen p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Product Management</h1>
           <button
-            onClick={() => setActiveTab("signin")}
-            className={`flex-1 py-4 text-sm font-medium border-b-2 ${
-              activeTab === "signin"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            onClick={() => {
+              setEditingProduct(null);
+              form.reset();
+              setIsModalOpen(true);
+            }}
+            className="bg-primary-foreground text-primary-background cursor-pointer px-4 py-2 rounded-lg flex items-center hover:bg-primary-foreground/80 transition-colors duration-150"
           >
-            Sign In
-          </button>
-          <button
-            onClick={() => setActiveTab("signup")}
-            className={`flex-1 py-4 text-sm font-medium border-b-2 ${
-              activeTab === "signup"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Sign Up
+            <i className="ri-add-line text-lg mr-2"></i>
+            Add Product
           </button>
         </div>
 
-        {activeTab === "signin" ? (
-          <form
-            onSubmit={loginForm.handleSubmit(onLoginSubmit)}
-            className="space-y-6"
-          >
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-foreground"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  type="email"
-                  {...loginForm.register("email")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm"
-                />
-                {loginForm.formState.errors.email && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {loginForm.formState.errors.email.message}
-                  </p>
-                )}
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-foreground text-lg"></i>
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-primary-foreground/20"
+            />
+          </div>
+        </div>
+
+        {/* Products Table */}
+        <div className="bg-late-background rounded-lg border border-muted-foreground overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-muted-foreground bg-muted-background/50">
+                  <th className="text-left p-4">Product</th>
+                  <th className="text-left p-4">Price</th>
+                  <th className="text-left p-4">Stock</th>
+                  <th className="text-left p-4">Created</th>
+                  <th className="text-right p-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product) => (
+                  <tr
+                    key={product.id}
+                    className="border-b border-muted-foreground"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-12 w-12 rounded-lg overflow-hidden">
+                          {product.images[0] ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <i className="ri-image-line text-2xl text-muted-foreground"></i>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{product.name}</h3>
+                          <p className="text-sm text-secondary-foreground">
+                            {product.category}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">${product.price}</td>
+                    <td className="p-4">{product.stock}</td>
+                    <td className="p-4">
+                      {new Date(product.createdAt || "").toLocaleDateString(
+                        "en-GB",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end space-x-2">
+                        {deleteConfirmId === product.id ? (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleDelete(product.id || "")}
+                              className="p-2 hover:bg-destructive/10 rounded-md cursor-pointer text-destructive"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? (
+                                <div className="animate-spin">
+                                  <i className="ri-loader-4-line text-xl"></i>
+                                </div>
+                              ) : (
+                                <i className="ri-check-line text-2xl"></i>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="p-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150"
+                            >
+                              <i className="ri-close-line text-2xl"></i>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="p-2 rounded-md text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-all duration-150"
+                            >
+                              <i className="ri-edit-box-line text-xl"></i>
+                            </button>
+                            <button
+                              onClick={() =>
+                                setDeleteConfirmId(product.id || "")
+                              }
+                              className="p-2 text-secondary-foreground hover:text-destructive cursor-pointer transition-colors duration-150"
+                            >
+                              <i className="ri-delete-bin-6-line text-xl"></i>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredProducts.length === 0 && (
+            <div className="text-center py-12">
+              <i className="ri-error-warning-line text-6xl mx-auto text-muted-foreground"></i>
+              <h2 className="mt-4 text-lg font-medium text-foreground">
+                No products found
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                {searchQuery
+                  ? "Try adjusting your search query"
+                  : "Try to search another product"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Add/Edit Product Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-primary-background/90 backdrop-blur-sm z-50">
+            <div className="fixed inset-0 flex items-center justify-center p-4 ">
+              <div className="bg-late-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-muted-foreground custom-scrollbar">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">
+                      {editingProduct ? "Edit Product" : "Add New Product"}
+                    </h2>
+                    <button
+                      onClick={handleCloseModal}
+                      className="p-2 hover:bg-secondary rounded-md text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                    >
+                      <i className="ri-close-line text-2xl"></i>
+                    </button>
+                  </div>
+
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Product Name
+                      </label>
+                      <input
+                        {...form.register("name")}
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                      />
+                      {form.formState.errors.name && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {form.formState.errors.name.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        {...form.register("description")}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                      />
+                      {form.formState.errors.description && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {form.formState.errors.description.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Price
+                        </label>
+                        <input
+                          {...form.register("price")}
+                          type="number"
+                          step="0.01"
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        {form.formState.errors.price && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {form.formState.errors.price.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Stock
+                        </label>
+                        <input
+                          {...form.register("stock")}
+                          type="number"
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        {form.formState.errors.stock && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {form.formState.errors.stock.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Category
+                        </label>
+                        <input
+                          {...form.register("category")}
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        {form.formState.errors.category && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {form.formState.errors.category.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Image URLs
+                      </label>
+                      <div className="space-y-2">
+                        {form.watch("images")?.map((url, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              value={url}
+                              onChange={(e) => {
+                                const newImages = [...form.watch("images")];
+                                newImages[index] = e.target.value;
+                                form.setValue("images", newImages);
+                              }}
+                              className="flex-1 px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newImages = form
+                                  .watch("images")
+                                  .filter((_, i) => i !== index);
+                                form.setValue("images", newImages);
+                              }}
+                              className="p-2 rounded-md text-secondary-foreground hover:text-destructive cursor-pointer duration-150"
+                            >
+                              <i className="ri-close-line text-2xl"></i>
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentImages = form.watch("images") || [];
+                            form.setValue("images", [...currentImages, ""]);
+                          }}
+                          className="text-sm text-secondary-foreground hover:text-primary-foreground flex items-center cursor-pointer transition-colors duration-150 border border-muted-foreground hover:border-secondary-background/40 p-1 rounded-md"
+                        >
+                          <i className="ri-add-line mr-1"></i>
+                          Add Image URL
+                        </button>
+                      </div>
+                      {form.formState.errors.images && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {form.formState.errors.images.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end space-x-4 pt-6">
+                      <button
+                        type="button"
+                        onClick={handleCloseModal}
+                        className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary-foreground/80 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer"
+                      >
+                        {isLoading && (
+                          <div className="animate-spin">
+                            <i className="ri-loader-4-line text-lg"></i>
+                          </div>
+                        )}
+                        {editingProduct ? "Update Product" : "Add Product"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-foreground"
-              >
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  {...loginForm.register("password")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-                {loginForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {loginForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link
-                  href="/auth/forgot-password"
-                  className="font-medium text-primary hover:text-primary/80"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Sign in"
-                )}
-              </button>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => signIn("github")}
-                className="w-full flex items-center justify-center py-2 px-4 border border-border rounded-md shadow-sm text-sm font-medium text-foreground hover:bg-secondary"
-              >
-                <Github className="h-5 w-5 mr-2" />
-                GitHub
-              </button>
-            </div>
-          </form>
-        ) : (
-          <form
-            onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
-            className="space-y-6"
-          >
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-foreground"
-              >
-                Full name
-              </label>
-              <div className="mt-1">
-                <input
-                  id="name"
-                  type="text"
-                  {...registerForm.register("name")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm"
-                />
-                {registerForm.formState.errors.name && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {registerForm.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="register-email"
-                className="block text-sm font-medium text-foreground"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="register-email"
-                  type="email"
-                  {...registerForm.register("email")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm"
-                />
-                {registerForm.formState.errors.email && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {registerForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="register-password"
-                className="block text-sm font-medium text-foreground"
-              >
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="register-password"
-                  type={showPassword ? "text" : "password"}
-                  {...registerForm.register("password")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-                {registerForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {registerForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirm-password"
-                className="block text-sm font-medium text-foreground"
-              >
-                Confirm password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="confirm-password"
-                  type={showPassword ? "text" : "password"}
-                  {...registerForm.register("confirmPassword")}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary/20 focus:border-primary sm:text-sm"
-                />
-                {registerForm.formState.errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {registerForm.formState.errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Create account"
-                )}
-              </button>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => signIn("github")}
-                className="w-full flex items-center justify-center py-2 px-4 border border-border rounded-md shadow-sm text-sm font-medium text-foreground hover:bg-secondary"
-              >
-                <Github className="h-5 w-5 mr-2" />
-                GitHub
-              </button>
-            </div>
-          </form>
+          </div>
         )}
       </div>
     </div>

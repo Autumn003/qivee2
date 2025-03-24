@@ -20,6 +20,7 @@ model User {
   password    String
   number      String?     @unique
   image       String?
+  role        userRole    @default(USER)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orders      Order[]
@@ -29,9 +30,10 @@ model Product {
   id          String      @id @default(uuid())
   name        String
   description String
-  price       Decimal
+  price       Float
   stock       Int
-  image       String
+  images      String[]
+  category    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
@@ -39,7 +41,7 @@ model Product {
 
 model Order {
   id          String      @id @default(uuid())
-  tatalPrice  Decimal
+  tatalPrice  Float
   status      OrderStatus @default(PROCESSING)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -64,6 +66,11 @@ enum OrderStatus{
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum userRole{
+  ADMIN
+  USER
 }
 
 
