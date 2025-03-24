@@ -33,7 +33,7 @@ model Product {
   price       Float
   stock       Int
   images      String[]
-  category    String
+  category    productCategory
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
@@ -71,6 +71,12 @@ enum OrderStatus{
 enum userRole{
   ADMIN
   USER
+}
+
+enum productCategory{
+  baby_products
+  mobile_accessories
+  women_bagpacks
 }
 
 
