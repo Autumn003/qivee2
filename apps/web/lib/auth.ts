@@ -41,7 +41,10 @@ export const authOptions = {
     signIn: "/signin",
   },
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger, session }: any) {
+      if (trigger === "update" && session) {
+        return { ...token, ...session?.user };
+      }
       if (user) {
         token.id = user.id;
         token.name = user.name;

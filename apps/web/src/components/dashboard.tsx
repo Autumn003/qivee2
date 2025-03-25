@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn, getSession } from "next-auth/react";
 import { User } from "next-auth";
-
-interface UserProfile {
-  avatar?: string;
-  memberSince: string;
-}
+import {
+  updateUserAvatarSchema,
+  updateUserNameSchema,
+} from "schemas/user-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { updateAvatar, updateName } from "actions/user.action";
 
 interface DashboardStats {
   totalOrders: number;
@@ -27,13 +30,6 @@ interface RecentOrder {
     image: string;
   }>;
 }
-
-// Example data
-const userProfile: UserProfile = {
-  avatar:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
-  memberSince: "2024-01-15",
-};
 
 const dashboardStats: DashboardStats = {
   totalOrders: 12,
@@ -76,13 +72,98 @@ const recentOrders: RecentOrder[] = [
   },
 ];
 
+type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
+type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
+
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const user = session?.user ?? ({} as User);
 
+  const form = useForm<UserNameFormValues>({
+    resolver: zodResolver(updateUserNameSchema),
+    defaultValues: {
+      name: user.name || "",
+    },
+  });
+
+  const avatarForm = useForm<AvatarFormValues>({
+    resolver: zodResolver(updateUserAvatarSchema),
+    defaultValues: {
+      avatar: user.avatar || "",
+    },
+  });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editAvatar, setEditAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "profile">(
     "overview"
   );
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditAvatar(false);
+    form.reset({
+      name: user.name || "",
+    });
+  };
+
+  const onUpdateNameSubmit = async (data: UserNameFormValues) => {
+    if (!user.id) {
+      console.error("User ID is missing");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await updateName(user.id, data.name);
+
+      if (response?.error) {
+        console.error("Validation Error:", response.error);
+        return;
+      }
+
+      await update({
+        ...session,
+        user: { ...session?.user, name: response.updatedUser.name },
+      });
+
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error updating name:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onUpdateAvatarSubmit = async (data: AvatarFormValues) => {
+    if (!user.id) {
+      console.error("User ID is missing");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await updateAvatar(user.id, data.avatar);
+
+      if (response?.error) {
+        console.error("Validation Error:", response.error);
+        return;
+      }
+
+      await update({
+        user: { ...session?.user, avatar: response.updatedUser.avatar },
+      });
+
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error updating avatar:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusColor = (status: RecentOrder["status"]) => {
     switch (status) {
@@ -103,27 +184,41 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div className="flex items-center">
-            <div className="w-16 h-16 flex items-center justify-center rounded-full border border-secondary-foreground">
+            <div className="relative w-20 h-20 flex items-center justify-center rounded-full border border-secondary-foreground overflow-hidden">
               {user.avatar ? (
                 <img
                   src={user.avatar}
                   alt={user?.name || ""}
-                  className="h-15 w-15 rounded-full object-cover"
+                  className="h-[72px] w-[72px] rounded-full object-cover"
                 />
               ) : (
                 <i className="ri-user-3-line text-4xl text-secondary-foreground"></i>
               )}
+              <button
+                className="absolute bottom-0 bg-primary-background/50 cursor-pointer w-full"
+                onClick={() => {
+                  setEditAvatar(true), setIsModalOpen(true);
+                }}
+              >
+                <i className="ri-edit-fill"></i>
+              </button>
             </div>
 
             <div className="ml-4">
               <h1 className="text-2xl font-bold text-foreground">
-                {user.name}
+                {user.name
+                  ?.toString()
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
               </h1>
               <p className="text-sm text-muted-foreground">{user.id}</p>
             </div>
           </div>
           <div className="mt-8 md:mt-0 flex justify-around">
-            <button className="px-4 py-2 mr-2 bg-primary-foreground border-2 border-primary-foreground hover:border-primary-foreground/80 text-primary-background rounded-lg hover:bg-primary-foreground/80 cursor-pointer transition-all duration-150">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 mr-2 bg-primary-foreground border-2 border-primary-foreground hover:border-primary-foreground/80 text-primary-background rounded-lg hover:bg-primary-foreground/80 cursor-pointer transition-all duration-150"
+            >
               Edit Profile
             </button>
             <button
@@ -160,6 +255,93 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-primary-background/90 backdrop-blur-sm z-50">
+            <div className="fixed inset-0 flex items-center justify-center p-4 ">
+              <div className="bg-late-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-muted-foreground custom-scrollbar">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">
+                      {editAvatar ? "Update avatar" : "Update user name"}
+                    </h2>
+                    <button
+                      onClick={handleCloseModal}
+                      className="p-2 hover:bg-secondary rounded-md text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                    >
+                      <i className="ri-close-line text-2xl"></i>
+                    </button>
+                  </div>
+
+                  <form
+                    onSubmit={
+                      editAvatar
+                        ? avatarForm.handleSubmit(onUpdateAvatarSubmit)
+                        : form.handleSubmit(onUpdateNameSubmit)
+                    }
+                    className="space-y-6"
+                  >
+                    {!editAvatar ? (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          User Name
+                        </label>
+                        <input
+                          {...form.register("name")}
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        {form.formState.errors.name && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {form.formState.errors.name.message}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          User Avatar
+                        </label>
+                        <input
+                          {...avatarForm.register("avatar")}
+                          type="text"
+                          placeholder="Enter avatar URL"
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        {avatarForm.formState.errors.avatar && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {avatarForm.formState.errors.avatar.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end space-x-4 pt-6">
+                      <button
+                        type="button"
+                        onClick={handleCloseModal}
+                        className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary-foreground/80 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer"
+                      >
+                        {isLoading && (
+                          <div className="animate-spin">
+                            <i className="ri-loader-4-line text-lg"></i>
+                          </div>
+                        )}
+                        Update
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === "overview" && (
           <div className="space-y-8 mb-20">
@@ -279,7 +461,10 @@ export default function Dashboard() {
             <div className="bg-card rounded-lg border border-muted-foreground p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">Personal Information</h2>
-                <button className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
+                >
                   <i className="ri-edit-box-line text-xl"></i>
                 </button>
               </div>
@@ -288,7 +473,12 @@ export default function Dashboard() {
                   <label className="text-sm text-secondary-foreground">
                     Full Name
                   </label>
-                  <p className="mt-1 font-medium">{user.name}</p>
+                  <p className="mt-1 font-medium">
+                    {user.name
+                      ?.toString()
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm text-secondary-foreground">
