@@ -19,7 +19,7 @@ model User {
   email       String      @unique
   password    String
   number      String?     @unique
-  image       String?
+  avatar      String?
   role        userRole    @default(USER)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

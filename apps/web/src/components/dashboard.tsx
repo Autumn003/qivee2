@@ -30,8 +30,8 @@ interface RecentOrder {
 
 // Example data
 const userProfile: UserProfile = {
-  // avatar:
-  //   "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
+  avatar:
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
   memberSince: "2024-01-15",
 };
 
@@ -104,9 +104,9 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div className="flex items-center">
             <div className="w-16 h-16 flex items-center justify-center rounded-full border border-secondary-foreground">
-              {userProfile.avatar ? (
+              {user.avatar ? (
                 <img
-                  src={userProfile.avatar}
+                  src={user.avatar}
                   alt={user?.name || ""}
                   className="h-15 w-15 rounded-full object-cover"
                 />
@@ -119,10 +119,7 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold text-foreground">
                 {user.name}
               </h1>
-              <p className="text-sm text-secondary-foreground">
-                Member since{" "}
-                {new Date(userProfile.memberSince).toLocaleDateString()}
-              </p>
+              <p className="text-sm text-muted-foreground">{user.id}</p>
             </div>
           </div>
           <div className="mt-8 md:mt-0 flex justify-around">

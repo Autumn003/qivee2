@@ -47,7 +47,10 @@ export const authOptions = {
         token.name = user.name;
         token.number = user.number;
         token.email = user.email;
+        token.role = user.role;
+        token.avatar = user.avatar;
       }
+
       return token;
     },
     async session({ session, token }: any) {
@@ -56,17 +59,11 @@ export const authOptions = {
         session.user.name = token.name;
         session.user.number = token.number;
         session.user.email = token.email;
+        session.user.role = token.role;
+        session.user.avatar = token.avatar;
       }
+
       return session;
     },
   },
-
-  // callbacks: {
-  //   // TODO: can u fix the type here? Using any is bad
-  //   async session({ token, session }: any) {
-  //     session.user.id = token.sub;
-
-  //     return session;
-  //   },
-  // },
 };
