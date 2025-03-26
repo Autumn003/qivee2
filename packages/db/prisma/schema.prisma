@@ -20,7 +20,7 @@ model User {
   password    String
   number      String?     @unique
   avatar      String?
-  role        userRole    @default(USER)
+  role        UserRole    @default(USER)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orders      Order[]
@@ -54,7 +54,7 @@ model OrderItem {
   id          String      @id @default(uuid())
   orderId     String
   productId   String
-  quantity    String
+  quantity    Int
   price       Decimal
   order       Order       @relation(fields: [orderId], references: [id])
   product     Product     @relation(fields: [productId], references: [id])
@@ -68,7 +68,7 @@ enum OrderStatus{
   CANCELLED
 }
 
-enum userRole{
+enum UserRole{
   ADMIN
   USER
 }
