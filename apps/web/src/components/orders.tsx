@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { OrderStatus } from "@prisma/client";
+
+import { getAllOrders, cancelOrder } from "../../actions/order.action";
+import { useSession } from "next-auth/react";
 
 interface OrderItem {
   id: string;
@@ -18,95 +22,42 @@ interface OrderItem {
 interface Order {
   id: string;
   date: string;
-  status: "processing" | "shipped" | "delivered" | "cancelled";
-  total: number;
+  status: OrderStatus;
+  totalPrice: number; // Fixed typo to match backend
   items: OrderItem[];
   trackingNumber?: string;
   estimatedDelivery?: string;
 }
 
-// Example orders data
-const orders: Order[] = [
-  {
-    id: "ORD-2024-001",
-    date: "2024-03-20",
-    status: "delivered",
-    total: 329.97,
-    trackingNumber: "TRK123456789",
-    estimatedDelivery: "2024-03-25",
-    items: [
-      {
-        id: "item1",
-        productId: "example",
-        name: "Nike Air Max 2024 Limited Edition",
-        price: 199.99,
-        color: "Summit White",
-        size: "US 9.5",
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800",
-      },
-      {
-        id: "item2",
-        productId: "product2",
-        name: "Nike Zoom Pegasus 40",
-        price: 129.99,
-        color: "Black/White",
-        size: "US 10",
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800",
-      },
-    ],
-  },
-  {
-    id: "ORD-2024-002",
-    date: "2024-03-18",
-    status: "shipped",
-    total: 199.99,
-    trackingNumber: "TRK987654321",
-    estimatedDelivery: "2024-03-23",
-    items: [
-      {
-        id: "item3",
-        productId: "example",
-        name: "Nike Air Max 2024 Limited Edition",
-        price: 199.99,
-        color: "Phantom Black",
-        size: "US 10",
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800",
-      },
-    ],
-  },
-  {
-    id: "ORD-2024-003",
-    date: "2024-03-15",
-    status: "processing",
-    total: 259.98,
-    items: [
-      {
-        id: "item4",
-        productId: "product2",
-        name: "Nike Zoom Pegasus 40",
-        price: 129.99,
-        color: "University Blue",
-        size: "US 9",
-        quantity: 2,
-        image:
-          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800",
-      },
-    ],
-  },
-];
-
 export default function Orders() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Order["status"] | "all">(
-    "all"
-  );
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    if (!userId) return;
+    async function fetchOrders() {
+      const response = await getAllOrders(userId || "");
+      if (response.success) {
+        const formattedOrders = response.orders.map((order) => ({
+          ...order,
+          items: order.orderItems.map((orderItem) => ({
+            id: orderItem.id,
+            productId: orderItem.product.id,
+            name: orderItem.product.name,
+            price: orderItem.price,
+            quantity: orderItem.quantity,
+            image: orderItem.product.images[0] || "", // Ensure image exists
+          })),
+        }));
+        setOrders(formattedOrders);
+      }
+    }
+    fetchOrders();
+  }, [userId]);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -119,15 +70,15 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: Order["status"]) => {
+  const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case "processing":
+      case OrderStatus.PROCESSING:
         return "bg-blue-100 text-blue-800";
-      case "shipped":
+      case OrderStatus.SHIPPED:
         return "bg-amber-100 text-amber-800";
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return "bg-green-100 text-green-800";
-      case "cancelled":
+      case OrderStatus.CANCELLED:
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -136,12 +87,14 @@ export default function Orders() {
 
   const getStatusIcon = (status: Order["status"]) => {
     switch (status) {
-      case "processing":
+      case OrderStatus.PROCESSING:
         return <i className="ri-time-line text-lg"></i>;
-      case "shipped":
+      case OrderStatus.SHIPPED:
         return <i className="ri-truck-line text-lg"></i>;
-      case "delivered":
+      case OrderStatus.DELIVERED:
         return <i className="ri-checkbox-circle-line text-lg"></i>;
+      case OrderStatus.DELIVERED:
+        return <i className="ri-close-circle-line text-lg"></i>;
       default:
         return null;
     }
@@ -288,12 +241,12 @@ export default function Orders() {
                             {item.color} • Size {item.size}
                           </p>
                           <p className="text-sm text-secondary-foreground">
-                            Qty: {item.quantity} × ${item.price.toFixed(2)}
+                            Qty: {item.quantity} × ${item.price}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-medium">
-                            ${(item.quantity * item.price).toFixed(2)}
+                            ${item.quantity * item.price}
                           </p>
                         </div>
                       </div>
@@ -309,7 +262,7 @@ export default function Orders() {
                             Total
                           </span>
                           <span className="font-medium">
-                            ${order.total.toFixed(2)}
+                            ${order.totalPrice}
                           </span>
                         </div>
                       </div>
@@ -318,7 +271,7 @@ export default function Orders() {
 
                   {/* Action Buttons */}
                   <div className="mt-6 flex flex-wrap gap-4">
-                    {order.status === "delivered" && (
+                    {order.status === OrderStatus.DELIVERED && (
                       <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
                         Write a Review
                       </button>
