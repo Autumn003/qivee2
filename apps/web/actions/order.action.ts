@@ -21,17 +21,20 @@ export async function createOrder(
       return {
         product: { connect: { id: productId } }, // Connect existing product
         quantity,
-        price: product.price * quantity,
+        price: product.price,
       };
     })
   );
 
-  const totalPrice = orderItems.reduce((sum, item) => sum + item.price, 0);
+  const totalPrice = orderItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   const order = await db.order.create({
     data: {
       userId,
-      tatalPrice: totalPrice,
+      totalPrice: totalPrice,
       status: OrderStatus.PROCESSING,
       orderItems: {
         create: orderItems,

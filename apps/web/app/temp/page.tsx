@@ -8,6 +8,7 @@ export default function Page() {
   const { data: session } = useSession();
   const userId = session?.user.id || "";
   const [items, setItems] = useState([
+    { productId: "af08874d-8454-4ef0-b27f-78afb8d6b6da", quantity: 2 },
     { productId: "99b9a4cf-db43-495d-a419-f99db519d8e4", quantity: 1 },
   ]);
 

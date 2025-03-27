@@ -3,39 +3,51 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Order, OrderItem } from "@prisma/client";
 
 import { getAllOrders, cancelOrder } from "../../actions/order.action";
 import { useSession } from "next-auth/react";
 
-interface OrderItem {
-  id: string;
-  productId: string;
+interface ExtendedOrderItem extends OrderItem {
   name: string;
-  price: number;
-  color: string;
-  size: string;
-  quantity: number;
   image: string;
 }
 
-interface Order {
-  id: string;
-  date: string;
-  status: OrderStatus;
-  totalPrice: number; // Fixed typo to match backend
-  items: OrderItem[];
-  trackingNumber?: string;
-  estimatedDelivery?: string;
+interface OrderWithItems extends Order {
+  items: ExtendedOrderItem[];
 }
 
 export default function Orders() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const cancelOrderHandler = async (orderId: string) => {
+    if (!userId) {
+      return alert("You must be logged in to cancel an order");
+    }
+
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this order?"
+    );
+    if (!confirmCancel) return;
+
+    const response = await cancelOrder(orderId, userId);
+    if (response.success) {
+      setOrders((prevOrder) =>
+        prevOrder.map((order) =>
+          order.id === orderId
+            ? { ...order, status: OrderStatus.CANCELLED }
+            : order
+        )
+      );
+    } else {
+      alert(response.error || "Failed to cancel the order.");
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -47,10 +59,11 @@ export default function Orders() {
           items: order.orderItems.map((orderItem) => ({
             id: orderItem.id,
             productId: orderItem.product.id,
+            orderId: orderItem.orderId,
             name: orderItem.product.name,
             price: orderItem.price,
             quantity: orderItem.quantity,
-            image: orderItem.product.images[0] || "", // Ensure image exists
+            image: orderItem.product.images[0] || "",
           })),
         }));
         setOrders(formattedOrders);
@@ -73,15 +86,15 @@ export default function Orders() {
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.PROCESSING:
-        return "bg-blue-100 text-blue-800";
+        return "bg-amber-300/30 text-amber-500";
       case OrderStatus.SHIPPED:
-        return "bg-amber-100 text-amber-800";
+        return "bg-sky-300/30 text-sky-500";
       case OrderStatus.DELIVERED:
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-300/30 text-emerald-500";
       case OrderStatus.CANCELLED:
-        return "bg-red-100 text-red-800";
+        return "bg-red-300/30 text-red-500";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-300/30 text-slate-500";
     }
   };
 
@@ -93,7 +106,7 @@ export default function Orders() {
         return <i className="ri-truck-line text-lg"></i>;
       case OrderStatus.DELIVERED:
         return <i className="ri-checkbox-circle-line text-lg"></i>;
-      case OrderStatus.DELIVERED:
+      case OrderStatus.CANCELLED:
         return <i className="ri-close-circle-line text-lg"></i>;
       default:
         return null;
@@ -126,15 +139,15 @@ export default function Orders() {
             <select
               value={statusFilter}
               onChange={(e) =>
-                setStatusFilter(e.target.value as Order["status"] | "all")
+                setStatusFilter(e.target.value as OrderStatus | "all")
               }
               className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-primary-background"
             >
               <option value="all">All Orders</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <option value={OrderStatus.PROCESSING}>Processing</option>
+              <option value={OrderStatus.SHIPPED}>Shipped</option>
+              <option value={OrderStatus.DELIVERED}>Delivered</option>
+              <option value={OrderStatus.CANCELLED}>Cancelled</option>
             </select>
           </div>
         </div>
@@ -151,10 +164,23 @@ export default function Orders() {
                   <div className="flex items-center space-x-4">
                     <i className="ri-box-1-line text-2xl"></i>
                     <div>
-                      <h2 className="text-lg font-medium">{order.id}</h2>
+                      <h2 className="text-lg font-medium">
+                        {order.items.length === 1
+                          ? order.items[0]?.name
+                          : `${order.items[0]?.name}, ${order.items[1]?.name} and more`}
+                      </h2>
                       <div className="flex items-center mt-1 space-x-2 text-sm text-secondary-foreground">
                         <i className="ri-calendar-line text-lg"></i>
-                        <span>{new Date(order.date).toLocaleDateString()}</span>
+                        <span>
+                          {new Date(order.createdAt).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -192,28 +218,16 @@ export default function Orders() {
               {selectedOrder === order.id && (
                 <div className="p-6 bg-secondary/30">
                   {/* Tracking Information */}
-                  {order.trackingNumber && (
-                    <div className="mb-6 p-4 rounded-lg border border-muted-foreground">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">Tracking Number</h3>
-                          <p className="text-sm text-secondary-foreground mt-1">
-                            {order.trackingNumber}
-                          </p>
-                        </div>
-                        {order.estimatedDelivery && (
-                          <div className="text-right">
-                            <h3 className="font-medium">Estimated Delivery</h3>
-                            <p className="text-sm text-secondary-foreground mt-1">
-                              {new Date(
-                                order.estimatedDelivery
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                        )}
+                  <div className="mb-6 p-4 rounded-lg border border-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium">Order Number</h3>
+                        <p className="text-sm text-secondary-foreground mt-1">
+                          {order.id}
+                        </p>
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Order Items */}
                   <div className="space-y-4">
@@ -237,9 +251,9 @@ export default function Orders() {
                             <span className="font-medium">{item.name}</span>
                             <i className="ri-arrow-right-up-line ml-1 text-lg"></i>
                           </Link>
-                          <p className="text-sm text-secondary-foreground mt-1">
-                            {item.color} • Size {item.size}
-                          </p>
+                          {/* <p className="text-sm text-secondary-foreground mt-1">
+                              {item.color} • Size {item.size}
+                            </p> */}
                           <p className="text-sm text-secondary-foreground">
                             Qty: {item.quantity} × ${item.price}
                           </p>
@@ -258,10 +272,10 @@ export default function Orders() {
                     <div className="flex justify-end">
                       <div className="w-full sm:w-72">
                         <div className="flex justify-between text-sm">
-                          <span className="text-primary-foreground font-medium">
+                          <span className="text-primary-foreground font-semibold text-xl">
                             Total
                           </span>
-                          <span className="font-medium">
+                          <span className="font-semibold text-xl">
                             ${order.totalPrice}
                           </span>
                         </div>
@@ -270,13 +284,16 @@ export default function Orders() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="mt-6 flex flex-wrap gap-4">
-                    {order.status === OrderStatus.DELIVERED && (
-                      <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
-                        Write a Review
+                  <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
+                    {order.status === OrderStatus.PROCESSING && (
+                      <button
+                        onClick={() => cancelOrderHandler(order.id)}
+                        className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary"
+                      >
+                        Cancel Order
                       </button>
                     )}
-                    <button className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary">
+                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
                       Contact Support
                     </button>
                   </div>
