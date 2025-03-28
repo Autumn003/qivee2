@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { OrderStatus, Order, OrderItem } from "@prisma/client";
 
-import { getAllOrders, cancelOrder } from "../../actions/order.action";
+import { getOrdersByUserId, cancelOrder } from "../../actions/order.action";
 import { useSession } from "next-auth/react";
 
 interface ExtendedOrderItem extends OrderItem {
@@ -52,7 +52,7 @@ export default function Orders() {
   useEffect(() => {
     if (!userId) return;
     async function fetchOrders() {
-      const response = await getAllOrders(userId || "");
+      const response = await getOrdersByUserId(userId || "");
       if (response.success) {
         const formattedOrders = response.orders.map((order) => ({
           ...order,
@@ -98,7 +98,7 @@ export default function Orders() {
     }
   };
 
-  const getStatusIcon = (status: Order["status"]) => {
+  const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.PROCESSING:
         return <i className="ri-time-line text-lg"></i>;
@@ -114,7 +114,7 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div className="mb-8 md:mb-0">
@@ -184,7 +184,7 @@ export default function Orders() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 sm:mt-0 flex items-center space-x-4">
+                  <div className="mt-4 sm:mt-0 flex items-center justify-between md:justify-normal space-x-4">
                     <div
                       className={`px-3 py-1 rounded-full flex items-center space-x-1.5 ${getStatusColor(order.status)}`}
                     >
@@ -285,6 +285,9 @@ export default function Orders() {
 
                   {/* Action Buttons */}
                   <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
+                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
+                      Contact Support
+                    </button>
                     {order.status === OrderStatus.PROCESSING && (
                       <button
                         onClick={() => cancelOrderHandler(order.id)}
@@ -293,9 +296,6 @@ export default function Orders() {
                         Cancel Order
                       </button>
                     )}
-                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
-                      Contact Support
-                    </button>
                   </div>
                 </div>
               )}

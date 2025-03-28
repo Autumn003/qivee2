@@ -48,7 +48,7 @@ export async function createOrder(
   return { success: true, order };
 }
 
-export async function getAllOrders(userId: string) {
+export async function getOrdersByUserId(userId: string) {
   if (!userId) {
     return { error: "user ID is required" };
   }
@@ -167,4 +167,17 @@ export async function deleteOrder(orderId: string, userRole: UserRole) {
   });
 
   return { success: true, message: "Order deleted successfully" };
+}
+
+export async function getAllOrders() {
+  const orders = await db.order.findMany({
+    include: { orderItems: { include: { product: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    success: true,
+    orders,
+    message: "All orders retrieved successfully!",
+  };
 }

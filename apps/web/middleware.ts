@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export { default } from "next-auth/middleware";
 import { getToken } from "next-auth/jwt";
+import { UserRole } from "@prisma/client";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -9,10 +10,17 @@ export async function middleware(request: NextRequest) {
 
   if (
     token &&
-    // url.pathname.startsWith("/admin") ||
     (url.pathname.startsWith("/api/admin") ||
       url.pathname.startsWith("/signin") ||
       url.pathname.startsWith("/signup"))
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (
+    token &&
+    token.role === UserRole.USER &&
+    (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api/admin"))
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -31,6 +39,6 @@ export const config = {
     "/signup",
     "/dashboard/:path*",
     "/admin/:pathname*",
-    // "/api/admin/:pathname*",
+    "/api/admin/:pathname*",
   ],
 };
