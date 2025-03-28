@@ -11,6 +11,7 @@ import Orders from "./orders";
 import Dashboard from "./dashboard";
 import Auth from "./auth";
 import AdminProducts from "./admin-products";
+import AdminOrders from "./admin-orders";
 
 export {
   Header,
@@ -26,4 +27,5 @@ export {
   Dashboard,
   Auth,
   AdminProducts,
+  AdminOrders,
 };
