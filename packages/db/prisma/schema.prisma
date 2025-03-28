@@ -18,6 +18,7 @@ model User {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orders      Order[]
+  addresses   Address[]
 }
 
 model Product {
@@ -42,6 +43,8 @@ model Order {
   userId      String
   user         User       @relation(fields: [userId], references: [id])
   orderItems  OrderItem[]
+  shippingAddressId   String
+  shippingAddress     Address   @relation(fields: [shippingAddressId], references: [id])
 }
 
 model OrderItem {
@@ -54,6 +57,21 @@ model OrderItem {
   product     Product     @relation(fields: [productId], references: [id])
 }
 
+model Address {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  name        String
+  house       String
+  street      String
+  city        String
+  zipCode     String
+  state       String
+  country     String
+  isDefault   Boolean     @default(false)
+  orders      Order[]
+
+}
 
 enum OrderStatus{
   PROCESSING
