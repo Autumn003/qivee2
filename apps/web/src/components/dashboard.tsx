@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut, signIn, getSession } from "next-auth/react";
 import { User } from "next-auth";
@@ -9,9 +9,17 @@ import {
   updateUserNameSchema,
 } from "schemas/user-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { boolean, z } from "zod";
 import { useForm } from "react-hook-form";
 import { updateAvatar, updateName } from "actions/user.action";
+import { Address } from "@prisma/client";
+import {
+  createAddress,
+  deleteAddress,
+  getUserAddresses,
+  updateAddress,
+} from "actions/address.action";
+import { addressSchema } from "schemas/address-schema";
 
 interface DashboardStats {
   totalOrders: number;
@@ -74,6 +82,34 @@ const recentOrders: RecentOrder[] = [
 
 type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
+type AddressFormValues = z.infer<typeof addressSchema>;
+
+const savedAddresses: Address[] = [
+  {
+    id: "1",
+    userId: "111111",
+    name: "Hemant Sharma",
+    house: "D-3/32",
+    street: "123 Main Street",
+    city: "New York",
+    state: "NY",
+    zipCode: "10001",
+    country: "United States",
+    isDefault: true,
+  },
+  {
+    id: "2",
+    userId: "2222222",
+    name: "John Doe",
+    house: "rehna Apartment, 1st floor",
+    street: "456 Park Avenue",
+    city: "Los Angeles",
+    state: "CA",
+    zipCode: "90001",
+    country: "United States",
+    isDefault: false,
+  },
+];
 
 export default function Dashboard() {
   const { data: session, update } = useSession();
@@ -93,12 +129,19 @@ export default function Dashboard() {
     },
   });
 
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editAvatar, setEditAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "profile">(
     "overview"
   );
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -175,6 +218,93 @@ export default function Dashboard() {
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  useEffect(() => {
+    async function fetchAddresses() {
+      const response = await getUserAddresses();
+      if (response.success) {
+        setAddresses(response.addresses);
+      }
+    }
+    fetchAddresses();
+  }, []);
+
+  const addressForm = useForm<AddressFormValues>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: {
+      name: "",
+      house: "",
+      street: "",
+      city: "",
+      zipCode: "",
+      state: "",
+      country: "",
+      isDefault: false,
+    },
+  });
+
+  const handleSubmitAddress = async (data: AddressFormValues) => {
+    setIsLoading(true);
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("house", data.house);
+    formData.append("street", data.street);
+    formData.append("city", data.city);
+    formData.append("zipCode", data.zipCode);
+    formData.append("state", data.state);
+    formData.append("country", data.country);
+    formData.append("isDefault", data.isDefault ? "true" : "false");
+    formData.append("userId", session?.user.id || "");
+
+    if (editingAddress) {
+      const response = await updateAddress(editingAddress.id, formData);
+
+      if (response.error) {
+        console.error("Error while updating address: ", response.error);
+        return;
+      }
+
+      setAddresses((prev) =>
+        prev.map((addr) =>
+          addr.id === editingAddress.id
+            ? response.address
+            : { ...addr, isDefault: false }
+        )
+      );
+    } else {
+      const response = await createAddress(formData);
+      if (response.error) {
+        console.error("Error while creating address: ", response.error);
+        return;
+      }
+      setAddresses((prev) =>
+        response.address.isDefault
+          ? prev
+              .map((addr) => ({ ...addr, isDefault: false }))
+              .concat(response.address)
+          : [...prev, response.address]
+      );
+    }
+
+    setEditingAddress(null);
+    addressForm.reset();
+    setIsAddingAddress(false);
+    setIsLoading(false);
+  };
+
+  const handleEditAddress = async (address: Address) => {
+    setEditingAddress(address);
+    addressForm.reset(address);
+    setIsAddingAddress(true);
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    const response = await deleteAddress(id);
+    if (response.success) {
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
     }
   };
 
@@ -491,14 +621,219 @@ export default function Dashboard() {
 
             {/* Addresses */}
             <div className="bg-card rounded-lg border border-muted-foreground p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Addresses</h2>
-                <button className="text-secondary-foreground transition-colors duration-150 hover:text-primary-foreground flex items-center cursor-pointer">
-                  <i className="ri-add-line text-xl mr-1"></i>
+              <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+                <div className="flex items-center text-xl">
+                  <i className="ri-map-pin-line mr-2"></i>
+                  <h2 className="text-lg font-medium">Saved Address</h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingAddress(null);
+                    addressForm.reset({
+                      name: "",
+                      house: "",
+                      street: "",
+                      city: "",
+                      zipCode: "",
+                      state: "",
+                      country: "",
+                      isDefault: false,
+                    });
+                    setIsAddingAddress(true);
+                  }}
+                  className="inline-flex items-center text-sm text-primary-background bg-primary-foreground hover:bg-primary-foreground/80 cursor-pointer px-2 py-1 rounded-md transition-colors duration-150"
+                >
+                  <i className="ri-add-line mr-1 text-lg"></i>
                   Add New Address
                 </button>
               </div>
-              {/* Address list would go here */}
+
+              {isAddingAddress ? (
+                <form
+                  onSubmit={addressForm.handleSubmit(handleSubmitAddress)}
+                  className="space-y-4"
+                >
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        {...addressForm.register("name")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        House / Flat / Apartment
+                      </label>
+                      <input
+                        {...addressForm.register("house")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Street Address
+                      </label>
+                      <input
+                        {...addressForm.register("street")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        City
+                      </label>
+                      <input
+                        {...addressForm.register("city")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        State
+                      </label>
+                      <input
+                        {...addressForm.register("state")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        ZIP Code
+                      </label>
+                      <input
+                        {...addressForm.register("zipCode")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Country
+                      </label>
+                      <input
+                        {...addressForm.register("country")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div className="flex text-end justify-end items-end">
+                      <label className="flex gap-5">
+                        <span className="text-sm font-medium">
+                          Set as default address
+                        </span>
+                        <input
+                          {...addressForm.register("isDefault")}
+                          type="checkbox"
+                          className="w-5 h-5 rounded-md self-center"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingAddress(false)}
+                      className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                    >
+                      Save Address
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  {addresses.map((address) => (
+                    <div key={address.id} className={`p-4 rounded-lg border`}>
+                      <div>
+                        <div className="flex items-center">
+                          <p className="font-medium">{address.name}</p>
+                          {address.isDefault && (
+                            <span className="ml-2 px-2 py-0.5 bg-muted-background text-primary-foreground text-xs rounded-md">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-secondary-foreground mt-1">
+                          {address.house}
+                        </p>
+                        <p className="text-sm text-secondary-foreground mt-1">
+                          {address.street}
+                        </p>
+                        <p className="text-sm text-secondary-foreground">
+                          {address.city}, {address.state} {address.zipCode}
+                        </p>
+                        <p className="text-sm text-secondary-foreground">
+                          {address.country}
+                        </p>
+                        <div className="flex items-center justify-end space-x-2">
+                          {deleteConfirmId === address.id ? (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() =>
+                                  handleDeleteAddress(address.id || "")
+                                }
+                                className="p-2 hover:bg-destructive/10 rounded-md cursor-pointer text-destructive"
+                                disabled={isLoading}
+                              >
+                                {isLoading ? (
+                                  <div className="animate-spin">
+                                    <i className="ri-loader-4-line text-xl"></i>
+                                  </div>
+                                ) : (
+                                  <i className="ri-check-line text-2xl"></i>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="p-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150"
+                              >
+                                <i className="ri-close-line text-2xl"></i>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEditAddress(address)}
+                                className="p-2 rounded-md text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-all duration-150"
+                              >
+                                <i className="ri-edit-box-line text-xl"></i>
+                              </button>
+                              <button
+                                onClick={() =>
+                                  setDeleteConfirmId(address.id || "")
+                                }
+                                className="p-2 text-secondary-foreground hover:text-destructive cursor-pointer transition-colors duration-150"
+                              >
+                                <i className="ri-delete-bin-6-line text-xl"></i>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

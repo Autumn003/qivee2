@@ -10,9 +10,19 @@ export async function createAddress(formData: FormData) {
     return { error: { message: "Unauthorized request" } };
   }
 
-  const parsedData = addressSchema.safeParse(Object.fromEntries(formData));
+  const parsedData = addressSchema.safeParse({
+    ...Object.fromEntries(formData),
+    isDefault: formData.get("isDefault") === "true", // Convert string to boolean
+  });
   if (!parsedData.success) {
     return { error: parsedData.error.flatten() };
+  }
+
+  if (parsedData.data.isDefault) {
+    await db.address.updateMany({
+      where: { userId: session.user.id, isDefault: true },
+      data: { isDefault: false },
+    });
   }
 
   const address = await db.address.create({
@@ -45,9 +55,19 @@ export async function updateAddress(id: string, formData: FormData) {
     return { error: { message: "Unauthorized request" } };
   }
 
-  const parsedData = addressSchema.safeParse(Object.fromEntries(formData));
+  const parsedData = addressSchema.safeParse({
+    ...Object.fromEntries(formData),
+    isDefault: formData.get("isDefault") === "true", // Convert string to boolean
+  });
   if (!parsedData.success) {
     return { error: parsedData.error.flatten() };
+  }
+
+  if (parsedData.data.isDefault) {
+    await db.address.updateMany({
+      where: { userId: session.user.id, isDefault: true },
+      data: { isDefault: false },
+    });
   }
 
   const updatedAddress = await db.address.update({
