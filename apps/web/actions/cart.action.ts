@@ -86,6 +86,7 @@ export async function getCart() {
   const userId = session.user.id;
   const cartItems = await db.cartItem.findMany({
     where: { userId },
+    include: { product: true },
   });
 
   return {
