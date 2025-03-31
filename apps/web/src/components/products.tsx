@@ -5,63 +5,25 @@ import ProductCard from "./product-card";
 import Dropdown from "./drop-down";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-
-const products = [
-  {
-    id: 1,
-    name: "Premium Wireless Headphones",
-    price: 199.99,
-    category: "mobile-accessories",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-    description:
-      "High-quality wireless headphones with noise cancellation and premium sound quality.",
-  },
-  {
-    id: 2,
-    name: "Leather Messenger Bag",
-    price: 89.99,
-    category: "women's-bagpack",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
-    description:
-      "Handcrafted leather messenger bag perfect for daily use and business meetings.",
-  },
-  {
-    id: 3,
-    name: "Smart Fitness Watch",
-    price: 149.99,
-    category: "mobile-accessories",
-    image: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=800",
-    description:
-      "Track your fitness goals with this advanced smartwatch featuring heart rate monitoring.",
-  },
-  {
-    id: 4,
-    name: "Organic Cotton T-Shirt",
-    price: 29.99,
-    category: "baby-products",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800",
-    description:
-      "Comfortable and eco-friendly cotton t-shirt made from organic materials.",
-  },
-  {
-    id: 5,
-    name: "Wireless Gaming Mouse",
-    price: 79.99,
-    category: "mobile-accessories",
-    image: "https://images.unsplash.com/photo-1527814050087-3793815479db?w=800",
-    description:
-      "Professional gaming mouse with customizable RGB lighting and precision tracking.",
-  },
-];
+import { getAllProducts } from "actions/product.action";
+import { Product, productCategory } from "@prisma/client";
 
 const Products = () => {
   const searchParams = useSearchParams();
-  const selectedCategory = searchParams.get("category") || "All";
+  const selectedCategory = searchParams.get("category") as
+    | productCategory
+    | null
+    | "All";
+
+  const [products, setProducts] = useState<Product[]>([]);
 
   const filteredProducts =
-    selectedCategory === "All"
+    !selectedCategory || selectedCategory === "All"
       ? products
-      : products.filter((product) => product.category === selectedCategory);
+      : products.filter(
+          (product) =>
+            product.category === (selectedCategory as productCategory)
+        );
 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -79,6 +41,16 @@ const Products = () => {
     window.addEventListener("scroll", scrollHandle);
     return () => window.removeEventListener("scroll", scrollHandle);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await getAllProducts();
+      if (response.success) {
+        setProducts(response.products);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">

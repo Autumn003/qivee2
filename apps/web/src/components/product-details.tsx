@@ -1,7 +1,6 @@
 "use client";
 
 import { FeaturedCard } from "@/components";
-import { cn } from "@/lib/utils";
 import { getproductById, getRecommendedProducts } from "actions/product.action";
 import Link from "next/link";
 import { useEffect, useState } from "react";

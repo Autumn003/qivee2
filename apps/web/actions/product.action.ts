@@ -2,6 +2,7 @@
 
 import db from "@repo/db/client";
 import { productSchema } from "schemas/product-schema";
+import { productCategory } from "@prisma/client";
 
 export async function getAllProducts() {
   try {
@@ -19,6 +20,59 @@ export async function getAllProducts() {
   } catch (error) {
     console.error("Error fetching products:", error);
     return { error: "Failed to fetch products" };
+  }
+}
+
+export async function getproductById(id: string) {
+  if (!id) {
+    return { error: "Product ID is required" };
+  }
+
+  const product = await db.product.findUnique({ where: { id } });
+  if (!product) {
+    return { error: { message: "Product not found" } };
+  }
+
+  return { success: true, product, message: "product retrieved successfully" };
+}
+
+export async function getRecommendedProducts(
+  productId: string,
+  category: productCategory
+) {
+  try {
+    let categoryProducts = await db.product.findMany({
+      where: { category, NOT: { id: productId } },
+      take: 8,
+    });
+
+    if (categoryProducts.length < 8) {
+      const needed = 8 - categoryProducts.length;
+      const recentProducts = await db.product.findMany({
+        where: { NOT: { id: productId } },
+        orderBy: { createdAt: "desc" },
+        take: needed,
+      });
+
+      const serializedRecentProducts = recentProducts.map((product) => ({
+        ...product,
+      }));
+
+      // Merge and ensure uniqueness
+      const combinedProducts = [
+        ...categoryProducts,
+        ...serializedRecentProducts,
+      ].filter(
+        (p, index, self) => index === self.findIndex((t) => t.id === p.id)
+      );
+
+      return { success: true, products: combinedProducts };
+    }
+
+    return { success: true, products: categoryProducts };
+  } catch (error) {
+    console.error("Error fetching recommended products:", error);
+    return { error: "Failed to fetch recommended products" };
   }
 }
 

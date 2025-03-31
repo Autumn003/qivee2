@@ -1,56 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getCart, removeFromCart, updateQuantity } from "actions/cart.action";
+import { CartItem } from "@prisma/client";
 
-// Example cart data - in a real app, this would come from your cart state management
-const initialCartItems = [
-  {
-    id: "1",
-    name: "Nike Air Max 2024 Limited Edition",
-    price: 199.99,
-    color: "Summit White",
-    size: "US 9.5",
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800",
-  },
-  {
-    id: "2",
-    name: "Nike Zoom Pegasus 40",
-    price: 129.99,
-    color: "Black/White",
-    size: "US 10",
-    quantity: 2,
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800",
-  },
-  {
-    id: "3",
-    name: "Nike Air Max 2024 Limited Edition",
-    price: 199.99,
-    color: "Summit White",
-    size: "US 9.5",
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800",
-  },
-];
+interface CartItemWithDetails {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
 
 export default function Cart() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState<CartItemWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  const updateQuantityHandler = async (
+    cartItemId: string,
+    productId: string,
+    newQuantity: number
+  ) => {
     if (newQuantity < 1) return;
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    setIsLoading((prev) => ({ ...prev, [cartItemId]: true }));
+    try {
+      const response = await updateQuantity(productId, newQuantity);
+
+      if (response.success) {
+        setCartItems((items) =>
+          items.map((item) =>
+            item.id === cartItemId ? { ...item, quantity: newQuantity } : item
+          )
+        );
+      } else {
+        console.error("Failed to update quantity:", response.error);
+      }
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+    } finally {
+      setIsLoading((prev) => ({ ...prev, [cartItemId]: false }));
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const removeItem = async (id: string) => {
+    if (!window.confirm("Delete item from cart?")) return;
+    setIsLoading((prev) => ({ ...prev, [id]: true }));
+
+    try {
+      const response = await removeFromCart(id);
+      if (response.success) {
+        setCartItems((items) => items.filter((item) => item.productId !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting cart item:", error);
+    } finally {
+      setIsLoading((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   const subtotal = cartItems.reduce(
@@ -60,6 +67,18 @@ export default function Cart() {
   const shipping = 12.99;
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;
+
+  useEffect(() => {
+    async function fetchCartItems() {
+      const response = await getCart();
+      if (response.success) {
+        setCartItems(response.cartItems);
+      } else {
+        console.error("Failed to fetch products:", response.error);
+      }
+    }
+    fetchCartItems();
+  }, []);
 
   return (
     <div className="min-h-screen bg-muted-background/30">
@@ -99,9 +118,6 @@ export default function Cart() {
                       <h3 className="text-base font-medium text-primary-foreground">
                         {item.name}
                       </h3>
-                      <p className="mt-1 text-sm text-secondary-foreground">
-                        {item.color} • Size {item.size}
-                      </p>
                       <p className="mt-1 text-sm font-medium text-primary-foreground">
                         ${item.price.toFixed(2)}
                       </p>
@@ -111,7 +127,11 @@ export default function Cart() {
                       <div className="flex items-center border border-muted-foreground rounded-md">
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
+                            updateQuantityHandler(
+                              item.id,
+                              item.productId,
+                              item.quantity - 1
+                            )
                           }
                           className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
                         >
@@ -122,7 +142,11 @@ export default function Cart() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
+                            updateQuantityHandler(
+                              item.id,
+                              item.productId,
+                              item.quantity + 1
+                            )
                           }
                           className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
                         >
@@ -130,10 +154,16 @@ export default function Cart() {
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.productId)}
                         className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-destructive"
                       >
-                        <i className="ri-delete-bin-6-line text-xl"></i>
+                        {isLoading[item.id] ? (
+                          <div className="animate-spin">
+                            <i className="ri-loader-4-line text-xl"></i>
+                          </div>
+                        ) : (
+                          <i className="ri-delete-bin-6-line text-xl"></i>
+                        )}
                       </button>
                     </div>
                   </div>

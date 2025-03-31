@@ -4,7 +4,7 @@ import Dropdown from "./drop-down";
 import ThemeToggler from "./theme-toggler";
 import ProductCard from "./product-card";
 import FeaturedCard from "./featured-card";
-import Product from "./product";
+import ProductDetails from "./product-details";
 import Cart from "./cart";
 import Checkout from "./checkout";
 import Orders from "./orders";
@@ -20,7 +20,7 @@ export {
   ThemeToggler,
   ProductCard,
   FeaturedCard,
-  Product,
+  ProductDetails,
   Cart,
   Checkout,
   Orders,
