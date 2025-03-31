@@ -87,11 +87,21 @@ export async function getCart() {
   const cartItems = await db.cartItem.findMany({
     where: { userId },
     include: { product: true },
+    orderBy: { createdAt: "desc" },
   });
+
+  const formatedCartItems = cartItems.map((item) => ({
+    id: item.id,
+    productId: item.productId,
+    name: item.product.name,
+    price: item.product.price,
+    image: item.product.images?.[0] ?? "",
+    quantity: item.quantity,
+  }));
 
   return {
     success: true,
-    cartItems,
+    cartItems: formatedCartItems,
     message: "Cart items retrieved successfully",
   };
 }
