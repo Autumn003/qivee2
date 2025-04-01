@@ -84,33 +84,6 @@ type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
 type AddressFormValues = z.infer<typeof addressSchema>;
 
-const savedAddresses: Address[] = [
-  {
-    id: "1",
-    userId: "111111",
-    name: "Hemant Sharma",
-    house: "D-3/32",
-    street: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "United States",
-    isDefault: true,
-  },
-  {
-    id: "2",
-    userId: "2222222",
-    name: "John Doe",
-    house: "rehna Apartment, 1st floor",
-    street: "456 Park Avenue",
-    city: "Los Angeles",
-    state: "CA",
-    zipCode: "90001",
-    country: "United States",
-    isDefault: false,
-  },
-];
-
 export default function Dashboard() {
   const { data: session, update } = useSession();
   const user = session?.user ?? ({} as User);
@@ -132,7 +105,6 @@ export default function Dashboard() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -241,6 +213,7 @@ export default function Dashboard() {
       zipCode: "",
       state: "",
       country: "",
+      mobile: "",
       isDefault: false,
     },
   });
@@ -256,6 +229,7 @@ export default function Dashboard() {
     formData.append("zipCode", data.zipCode);
     formData.append("state", data.state);
     formData.append("country", data.country);
+    formData.append("mobile", data.mobile);
     formData.append("isDefault", data.isDefault ? "true" : "false");
     formData.append("userId", session?.user.id || "");
 
@@ -637,6 +611,7 @@ export default function Dashboard() {
                       zipCode: "",
                       state: "",
                       country: "",
+                      mobile: "",
                       isDefault: false,
                     });
                     setIsAddingAddress(true);
@@ -667,7 +642,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        House / Flat / Apartment
+                        House / Flat
                       </label>
                       <input
                         {...addressForm.register("house")}
@@ -731,7 +706,18 @@ export default function Dashboard() {
                         required
                       />
                     </div>
-                    <div className="flex text-end justify-end items-end">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Mobile
+                      </label>
+                      <input
+                        {...addressForm.register("mobile")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
                       <label className="flex gap-5">
                         <span className="text-sm font-medium">
                           Set as default address
@@ -785,6 +771,7 @@ export default function Dashboard() {
                         <p className="text-sm text-secondary-foreground">
                           {address.country}
                         </p>
+                        <p className="text-sm mt-1">{address.mobile}</p>
                         <div className="flex items-center justify-end space-x-2">
                           {deleteConfirmId === address.id ? (
                             <div className="flex items-center space-x-2">

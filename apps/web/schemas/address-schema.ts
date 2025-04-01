@@ -8,5 +8,6 @@ export const addressSchema = z.object({
   zipCode: z.string().min(4, "Zip Code must be valid"),
   state: z.string().min(2, "State must be at least 2 characters"),
   country: z.string().min(2, "Country must be at least 2 characters"),
+  mobile: z.string().min(10, "Mobile number must be valid"),
   isDefault: z.boolean().optional(),
 });

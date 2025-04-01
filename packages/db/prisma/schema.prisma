@@ -83,6 +83,7 @@ model Address {
   zipCode     String
   state       String
   country     String
+  mobile      String
   isDefault   Boolean     @default(false)
   orders      Order[]
 
