@@ -17,6 +17,16 @@ interface ExtendedOrderItem extends OrderItem {
 
 interface OrderWithItems extends Order {
   items: ExtendedOrderItem[];
+  shippingAddress: {
+    name: string;
+    house: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    mobile: string;
+  };
 }
 
 export default function AdminOrders() {
@@ -37,6 +47,7 @@ export default function AdminOrders() {
       if (response.success) {
         const formattedOrders = response.orders.map((order) => ({
           ...order,
+          shippingAddress: order.shippingAddress || {},
           items: order.orderItems.map((orderItem) => ({
             id: orderItem.id,
             productId: orderItem.product.id,
@@ -307,22 +318,23 @@ export default function AdminOrders() {
                   ) : (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Order Details</h3>
-                      <p>
-                        <strong>Customer:</strong> {order.userId}
-                      </p>
-                      {/* <p>
-                        <strong>Email:</strong> {order.userEmail}
-                      </p>
-                      <p>
-                        <strong>Address:</strong>{" "}
-                        {`${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.state}, ${order.shippingAddress.zipCode}, ${order.shippingAddress.country}`}
-                      </p>
-                      <p>
-                        <strong>Tracking Number:</strong>{" "}
-                        {order.trackingNumber || "N/A"}
-                      </p> */}
-                      <h4 className="text-lg font-semibold mt-4">Items:</h4>
-
+                      <div>
+                        <strong>Customer</strong>
+                        <p className="text-secondary-foreground text-sm">
+                          {order.userId}
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Address</strong>{" "}
+                        <div className="text-secondary-foreground text-sm">
+                          <p>{order.shippingAddress.name}</p>
+                          <p>{order.shippingAddress.mobile}</p>
+                          <p>
+                            {`${order.shippingAddress?.house}, ${order.shippingAddress?.street}, ${order.shippingAddress.city}, ${order.shippingAddress.state}, ${order.shippingAddress.zipCode}, ${order.shippingAddress.country}`}
+                          </p>
+                        </div>
+                      </div>
+                      <h4 className="text-lg font-semibold mt-4">Items</h4>
                       {/* Order Items */}
                       <div className="space-y-4">
                         {order.items.map((item) => (
@@ -357,7 +369,6 @@ export default function AdminOrders() {
                           </div>
                         ))}
                       </div>
-
                       {/* Order Summary */}
                       <div className="mt-6 pt-6 border-t border-muted-foreground">
                         <div className="flex justify-end">
@@ -373,7 +384,6 @@ export default function AdminOrders() {
                           </div>
                         </div>
                       </div>
-
                       {/* Action Buttons */}
                       {user?.role === UserRole.ADMIN && (
                         <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">

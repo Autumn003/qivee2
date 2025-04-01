@@ -1,84 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createAddress, getUserAddresses } from "actions/address.action";
+import { Address } from "@prisma/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { addressSchema } from "schemas/address-schema";
+import { z } from "zod";
+import { useSession } from "next-auth/react";
+import { getCart } from "actions/cart.action";
+import { createOrder } from "actions/order.action";
+import { PaymentMethod } from "@prisma/client";
 
-interface Address {
+interface CartItemWithDetails {
   id: string;
-  name: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  isDefault: boolean;
-}
-
-interface CartItem {
-  id: string;
+  productId: string;
   name: string;
   price: number;
-  color: string;
-  size: string;
-  quantity: number;
   image: string;
+  quantity: number;
 }
 
-const savedAddresses: Address[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    street: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "United States",
-    isDefault: true,
-  },
-  {
-    id: "2",
-    name: "John Doe",
-    street: "456 Park Avenue",
-    city: "Los Angeles",
-    state: "CA",
-    zipCode: "90001",
-    country: "United States",
-    isDefault: false,
-  },
-];
-
-const cartItems: CartItem[] = [
-  {
-    id: "example",
-    name: "Nike Air Max 2024 Limited Edition",
-    price: 199.99,
-    color: "Summit White",
-    size: "US 9.5",
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800",
-  },
-  {
-    id: "product2",
-    name: "Nike Zoom Pegasus 40",
-    price: 129.99,
-    color: "Black/White",
-    size: "US 10",
-    quantity: 2,
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800",
-  },
-];
-
 export default function Checkout() {
+  const { data: session } = useSession();
+
+  const [cartItems, setCartItems] = useState<CartItemWithDetails[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>(
     savedAddresses[0]?.id ?? ""
   );
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "UPI" | "COD">(
-    "card"
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    PaymentMethod.COD
   );
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -88,10 +45,108 @@ export default function Checkout() {
   const tax = subtotal * 0.1;
   const total = subtotal + shipping + tax;
 
-  const handleAddressSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle new address submission
+  useEffect(() => {
+    async function fetchAddresses() {
+      const response = await getUserAddresses();
+      if (response.success) {
+        setSavedAddresses(response.addresses);
+      }
+    }
+    fetchAddresses();
+
+    async function fetchCartItems() {
+      const response = await getCart();
+      if (response.success) {
+        setCartItems(response.cartItems);
+      } else {
+        console.error("Failed to fetch products:", response.error);
+      }
+    }
+    fetchCartItems();
+  }, []);
+
+  type AddressFormValues = z.infer<typeof addressSchema>;
+
+  const addressForm = useForm<AddressFormValues>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: {
+      name: "",
+      house: "",
+      street: "",
+      city: "",
+      zipCode: "",
+      state: "",
+      country: "",
+      mobile: "",
+      isDefault: false,
+    },
+  });
+
+  const handleSubmitAddress = async (data: AddressFormValues) => {
+    setIsLoading(true);
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("house", data.house);
+    formData.append("street", data.street);
+    formData.append("city", data.city);
+    formData.append("zipCode", data.zipCode);
+    formData.append("state", data.state);
+    formData.append("country", data.country);
+    formData.append("mobile", data.mobile);
+    formData.append("isDefault", data.isDefault ? "true" : "false");
+    formData.append("userId", session?.user.id || "");
+
+    const response = await createAddress(formData);
+    if (response.error) {
+      console.error("Error while creating address: ", response.error);
+      return;
+    }
+    setSavedAddresses((prev) =>
+      response.address.isDefault
+        ? prev
+            .map((addr) => ({ ...addr, isDefault: false }))
+            .concat(response.address)
+        : [...prev, response.address]
+    );
+
+    addressForm.reset();
     setIsAddingAddress(false);
+    setIsLoading(false);
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedAddress) {
+      alert("Please select a shipping address.");
+      return;
+    }
+
+    if (paymentMethod === "COD") {
+      setIsLoading(true);
+
+      const response = await createOrder(
+        session?.user.id || "", // userId
+        selectedAddress, // addressId
+        paymentMethod, // paymentMethod
+        cartItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })) // items
+      );
+
+      setIsLoading(false);
+
+      if (response.success) {
+        alert("Order placed successfully!");
+        // Redirect to order confirmation page
+        window.location.href = "/order-success";
+      } else {
+        alert("Error placing order: " + response.error);
+      }
+    } else {
+      // Redirect to payment page or integrate payment gateway
+      alert("Redirecting to payment gateway...");
+    }
   };
 
   return (
@@ -130,13 +185,28 @@ export default function Checkout() {
               </div>
 
               {isAddingAddress ? (
-                <form onSubmit={handleAddressSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form
+                  onSubmit={addressForm.handleSubmit(handleSubmitAddress)}
+                  className="space-y-4"
+                >
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Full Name
                       </label>
                       <input
+                        {...addressForm.register("name")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        House / Flat
+                      </label>
+                      <input
+                        {...addressForm.register("house")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
@@ -147,6 +217,7 @@ export default function Checkout() {
                         Street Address
                       </label>
                       <input
+                        {...addressForm.register("street")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
@@ -157,6 +228,7 @@ export default function Checkout() {
                         City
                       </label>
                       <input
+                        {...addressForm.register("city")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
@@ -167,6 +239,7 @@ export default function Checkout() {
                         State
                       </label>
                       <input
+                        {...addressForm.register("state")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
@@ -177,6 +250,7 @@ export default function Checkout() {
                         ZIP Code
                       </label>
                       <input
+                        {...addressForm.register("zipCode")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
@@ -187,10 +261,34 @@ export default function Checkout() {
                         Country
                       </label>
                       <input
+                        {...addressForm.register("country")}
                         type="text"
                         className="w-full px-3 py-2 border border-muted-foreground rounded-md"
                         required
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Mobile
+                      </label>
+                      <input
+                        {...addressForm.register("mobile")}
+                        type="text"
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="flex gap-5">
+                        <span className="text-sm font-medium">
+                          Set as default address
+                        </span>
+                        <input
+                          {...addressForm.register("isDefault")}
+                          type="checkbox"
+                          className="w-5 h-5 rounded-md self-center"
+                        />
+                      </label>
                     </div>
                   </div>
                   <div className="flex justify-end space-x-4">
@@ -203,15 +301,19 @@ export default function Checkout() {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                      className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 flex gap-2 cursor-pointer transition-all duration-150"
                     >
+                      {isLoading && (
+                        <div className="animate-spin">
+                          <i className="ri-loader-4-line"></i>
+                        </div>
+                      )}
                       Save Address
                     </button>
                   </div>
                 </form>
               ) : (
                 <div className="space-y-4">
-                  {/* {savedAddresses.length > 0 && */}
                   {savedAddresses.map((address) => (
                     <div
                       key={address.id}
@@ -233,11 +335,14 @@ export default function Checkout() {
                           <div className="flex items-center">
                             <p className="font-medium">{address.name}</p>
                             {address.isDefault && (
-                              <span className="ml-2 px-2 py-0.5 bg-primary-background/10 text-primary-foreground text-xs rounded">
+                              <span className="ml-2 px-2 py-0.5 bg-muted-background text-primary-foreground text-xs rounded-md">
                                 Default
                               </span>
                             )}
                           </div>
+                          <p className="text-sm text-secondary-foreground mt-1">
+                            {address.house}
+                          </p>
                           <p className="text-sm text-secondary-foreground mt-1">
                             {address.street}
                           </p>
@@ -246,6 +351,9 @@ export default function Checkout() {
                           </p>
                           <p className="text-sm text-secondary-foreground">
                             {address.country}
+                          </p>
+                          <p className="text-sm text-secondary-foreground">
+                            {address.mobile}
                           </p>
                         </div>
                       </label>
@@ -265,7 +373,7 @@ export default function Checkout() {
               <div className="space-y-4">
                 <div
                   className={`p-4 rounded-lg border ${
-                    paymentMethod === "card"
+                    paymentMethod === PaymentMethod.CARD
                       ? "border-primary-foreground bg-primary-background/5"
                       : "border-muted-foreground"
                   }`}
@@ -274,8 +382,8 @@ export default function Checkout() {
                     <input
                       type="radio"
                       name="payment"
-                      checked={paymentMethod === "card"}
-                      onChange={() => setPaymentMethod("card")}
+                      checked={paymentMethod === PaymentMethod.CARD}
+                      onChange={() => setPaymentMethod(PaymentMethod.CARD)}
                       className="mr-3"
                     />
                     <div className="flex items-center">
@@ -283,7 +391,7 @@ export default function Checkout() {
                       <span>Credit/Debit Card</span>
                     </div>
                   </label>
-                  {paymentMethod === "card" && (
+                  {paymentMethod === PaymentMethod.CARD && (
                     <div className="mt-4 grid grid-cols-2 gap-4">
                       <div className="col-span-2">
                         <label className="block text-sm font-medium mb-1">
@@ -321,7 +429,7 @@ export default function Checkout() {
 
                 <div
                   className={`p-4 rounded-lg border ${
-                    paymentMethod === "UPI"
+                    paymentMethod === PaymentMethod.UPI
                       ? "border-primary-foreground bg-primary-background/5"
                       : "border-muted-foreground"
                   }`}
@@ -330,8 +438,8 @@ export default function Checkout() {
                     <input
                       type="radio"
                       name="payment"
-                      checked={paymentMethod === "UPI"}
-                      onChange={() => setPaymentMethod("UPI")}
+                      checked={paymentMethod === PaymentMethod.UPI}
+                      onChange={() => setPaymentMethod(PaymentMethod.UPI)}
                       className="mr-3"
                     />
                     <div className="flex items-center">
@@ -347,7 +455,7 @@ export default function Checkout() {
 
                 <div
                   className={`p-4 rounded-lg border ${
-                    paymentMethod === "COD"
+                    paymentMethod === PaymentMethod.COD
                       ? "border-primary-foreground bg-primary-background/5"
                       : "border-muted-foreground"
                   }`}
@@ -356,8 +464,8 @@ export default function Checkout() {
                     <input
                       type="radio"
                       name="payment"
-                      checked={paymentMethod === "COD"}
-                      onChange={() => setPaymentMethod("COD")}
+                      checked={paymentMethod === PaymentMethod.COD}
+                      onChange={() => setPaymentMethod(PaymentMethod.COD)}
                       className="mr-3"
                     />
                     <div className="flex items-center">
@@ -397,9 +505,6 @@ export default function Checkout() {
                         {item.name}
                       </p>
                       <p className="text-sm text-secondary-foreground">
-                        {item.color} • Size {item.size}
-                      </p>
-                      <p className="text-sm text-secondary-foreground">
                         Qty: {item.quantity}
                       </p>
                     </div>
@@ -433,7 +538,10 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <button className="w-full mt-6 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center">
+              <button
+                onClick={handlePlaceOrder}
+                className="w-full mt-6 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center"
+              >
                 Place Order
                 <i className="ri-checkbox-circle-line ml-2 "></i>
               </button>

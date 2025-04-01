@@ -1,16 +1,73 @@
 "use server";
 
 import db from "@repo/db/client";
-import { OrderStatus, UserRole } from "@prisma/client";
+import { OrderStatus, UserRole, PaymentMethod } from "@prisma/client";
+
+// export async function createOrder(
+//   userId: string,
+//   items: { productId: string; quantity: number }[]
+// ) {
+//   if (!userId || items.length === 0) {
+//     return { error: "Invalid order data" };
+//   }
+
+//   const orderItems = await Promise.all(
+//     items.map(async ({ productId, quantity }) => {
+//       const product = await db.product.findUnique({ where: { id: productId } });
+//       if (!product || product.stock < quantity) {
+//         throw new Error(`Product ${productId} is out of stock or unavailable.`);
+//       }
+
+//       return {
+//         product: { connect: { id: productId } }, // Connect existing product
+//         quantity,
+//         price: product.price,
+//       };
+//     })
+//   );
+
+//   const totalPrice = orderItems.reduce(
+//     (sum, item) => sum + item.price * item.quantity,
+//     0
+//   );
+
+//   const order = await db.order.create({
+//     data: {
+//       userId,
+//       totalPrice: totalPrice,
+//       status: OrderStatus.PROCESSING,
+//       orderItems: {
+//         create: orderItems,
+//       },
+//     },
+//     include: {
+//       orderItems: true,
+//     },
+//   });
+
+//   return { success: true, order };
+// }
 
 export async function createOrder(
   userId: string,
+  addressId: string,
+  paymentMethod: PaymentMethod,
   items: { productId: string; quantity: number }[]
 ) {
-  if (!userId || items.length === 0) {
+  if (!userId || !addressId || items.length === 0) {
     return { error: "Invalid order data" };
   }
 
+  // Fetch the address snapshot
+  const address = await db.address.findUnique({
+    where: { id: addressId },
+  });
+
+  if (!address) {
+    return { error: "Invalid shipping address" };
+  }
+
+  // Validate products and calculate total price
   const orderItems = await Promise.all(
     items.map(async ({ productId, quantity }) => {
       const product = await db.product.findUnique({ where: { id: productId } });
@@ -31,11 +88,25 @@ export async function createOrder(
     0
   );
 
+  // Create the order with address snapshot
   const order = await db.order.create({
     data: {
       userId,
-      totalPrice: totalPrice,
+      totalPrice,
       status: OrderStatus.PROCESSING,
+      shippingAddressId: addressId,
+      paymentMethod,
+
+      // Store snapshot of address details
+      shippingName: address.name,
+      shippingHouse: address.house,
+      shippingStreet: address.street,
+      shippingCity: address.city,
+      shippingZipCode: address.zipCode,
+      shippingState: address.state,
+      shippingCountry: address.country,
+      shippingMobile: address.mobile,
+
       orderItems: {
         create: orderItems,
       },
@@ -62,7 +133,10 @@ export async function getOrdersByUserId(userId: string) {
     where: {
       userId,
     },
-    include: { orderItems: { include: { product: true } } },
+    include: {
+      orderItems: { include: { product: true } },
+      shippingAddress: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -171,7 +245,10 @@ export async function deleteOrder(orderId: string, userRole: UserRole) {
 
 export async function getAllOrders() {
   const orders = await db.order.findMany({
-    include: { orderItems: { include: { product: true } } },
+    include: {
+      orderItems: { include: { product: true } },
+      shippingAddress: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 

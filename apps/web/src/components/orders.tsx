@@ -15,6 +15,16 @@ interface ExtendedOrderItem extends OrderItem {
 
 interface OrderWithItems extends Order {
   items: ExtendedOrderItem[];
+  shippingAddress: {
+    name: string;
+    house: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    mobile: string;
+  };
 }
 
 export default function Orders() {
@@ -56,6 +66,7 @@ export default function Orders() {
       if (response.success) {
         const formattedOrders = response.orders.map((order) => ({
           ...order,
+          shippingAddress: order.shippingAddress || {},
           items: order.orderItems.map((orderItem) => ({
             id: orderItem.id,
             productId: orderItem.product.id,
@@ -218,12 +229,22 @@ export default function Orders() {
               {selectedOrder === order.id && (
                 <div className="p-6 bg-secondary/30">
                   {/* Tracking Information */}
-                  <div className="mb-6 p-4 rounded-lg border border-muted-foreground">
+                  <div className="mb-6 space-y-4 p-4 rounded-lg border border-muted-foreground">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">Order Number</h3>
                         <p className="text-sm text-secondary-foreground mt-1">
                           {order.id}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <strong>Address</strong>{" "}
+                      <div className="text-secondary-foreground text-sm">
+                        <p>{order.shippingAddress.name}</p>
+                        <p>{order.shippingAddress.mobile}</p>
+                        <p>
+                          {`${order.shippingAddress?.house}, ${order.shippingAddress?.street}, ${order.shippingAddress.city}, ${order.shippingAddress.state}, ${order.shippingAddress.zipCode}, ${order.shippingAddress.country}`}
                         </p>
                       </div>
                     </div>

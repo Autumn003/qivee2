@@ -199,10 +199,13 @@ export default function Cart() {
                     </div>
                   </div>
                 </div>
-                <button className="w-full mt-6 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center">
+                <Link
+                  href="/checkout"
+                  className="w-full mt-6 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center"
+                >
                   Checkout
                   <i className="ri-arrow-right-line ml-2"></i>
-                </button>
+                </Link>
               </div>
 
               {/* Secure Checkout Notice */}

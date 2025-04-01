@@ -53,13 +53,25 @@ model Order {
   id          String      @id @default(uuid())
   totalPrice  Float
   status      OrderStatus @default(PROCESSING)
+  paymentMethod PaymentMethod
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   userId      String
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
   shippingAddressId   String
   shippingAddress     Address   @relation(fields: [shippingAddressId], references: [id])
+
+// Snapshot of Address Fields
+  shippingName      String
+  shippingHouse     String
+  shippingStreet    String
+  shippingCity      String
+  shippingZipCode   String
+  shippingState     String
+  shippingCountry   String
+  shippingMobile    String
+
+  orderItems  OrderItem[]
 }
 
 model OrderItem {
@@ -105,6 +117,12 @@ enum productCategory{
   baby_products
   mobile_accessories
   women_bagpacks
+}
+
+enum PaymentMethod{
+  COD
+  CARD
+  UPI
 }
 
 
