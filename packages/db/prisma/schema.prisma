@@ -8,121 +8,131 @@ datasource db {
 }
 
 model User {
-  id          String      @id @default(uuid())
-  name        String 
-  email       String      @unique
-  password    String
-  number      String?     @unique
-  avatar      String?
-  role        UserRole    @default(USER)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orders      Order[]
-  addresses   Address[]
-  cartItems   CartItem[]
+  id        String         @id @default(uuid())
+  name      String
+  email     String         @unique
+  password  String
+  number    String?        @unique
+  avatar    String?
+  role      UserRole       @default(USER)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  orders    Order[]
+  addresses Address[]
+  cartItems CartItem[]
+  wishlist  WishlistItem[]
 }
 
 model Product {
-  id          String      @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   description String
   price       Float
   stock       Int
   images      String[]
   category    productCategory
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  wishlist    WishlistItem[]
 }
 
 model CartItem {
-  id          String      @id @default(uuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity    Int
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, productId])
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  totalPrice  Float
-  status      OrderStatus @default(PROCESSING)
-  paymentMethod PaymentMethod
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  userId      String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingAddressId   String
-  shippingAddress     Address   @relation(fields: [shippingAddressId], references: [id])
+  id                String        @id @default(uuid())
+  totalPrice        Float
+  status            OrderStatus   @default(PROCESSING)
+  paymentMethod     PaymentMethod
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingAddressId String
+  shippingAddress   Address       @relation(fields: [shippingAddressId], references: [id])
 
-// Snapshot of Address Fields
-  shippingName      String
-  shippingHouse     String
-  shippingStreet    String
-  shippingCity      String
-  shippingZipCode   String
-  shippingState     String
-  shippingCountry   String
-  shippingMobile    String
+  // Snapshot of Address Fields
+  shippingName    String
+  shippingHouse   String
+  shippingStreet  String
+  shippingCity    String
+  shippingZipCode String
+  shippingState   String
+  shippingCountry String
+  shippingMobile  String
 
-  orderItems  OrderItem[]
+  orderItems OrderItem[]
 }
 
 model OrderItem {
-  id          String      @id @default(uuid())
-  orderId     String
-  productId   String
-  quantity    Int
-  price       Float
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product     @relation(fields: [productId], references: [id])
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Address {
-  id          String      @id @default(uuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  house       String
-  street      String
-  city        String
-  zipCode     String
-  state       String
-  country     String
-  mobile      String
-  isDefault   Boolean     @default(false)
-  orders      Order[]
-
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  house     String
+  street    String
+  city      String
+  zipCode   String
+  state     String
+  country   String
+  mobile    String
+  isDefault Boolean @default(false)
+  orders    Order[]
 }
 
-enum OrderStatus{
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
   CANCELLED
 }
 
-enum UserRole{
+enum UserRole {
   ADMIN
   USER
 }
 
-enum productCategory{
+enum productCategory {
   baby_products
   mobile_accessories
   women_bagpacks
 }
 
-enum PaymentMethod{
+enum PaymentMethod {
   COD
   CARD
   UPI
 }
-
-
