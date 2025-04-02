@@ -1,7 +1,7 @@
-"user server";
+"use server";
 
 import db from "@repo/db/client";
-import { auth } from "lib/auth";
+import { auth } from "../../web/lib/auth";
 
 export async function addToWishlist(productId: string) {
   const session = await auth();
@@ -24,11 +24,11 @@ export async function addToWishlist(productId: string) {
   if (existingWishlistItem) {
     return { error: { message: "Product already in wishlist" } };
   }
-  const wishlist = await db.wishlistItem.create({
+  const wishlistItem = await db.wishlistItem.create({
     data: { userId, productId },
   });
 
-  return { success: true, wishlist, message: "Product added to wishlist" };
+  return { success: true, wishlistItem, message: "Product added to wishlist" };
 }
 
 export async function removeFromWishlist(productId: string) {
@@ -72,6 +72,8 @@ export async function getWishlist() {
     name: item.product.name,
     price: item.product.price,
     image: item.product.images?.[0] ?? "",
+    stock: item.product.stock,
+    createdAt: item.createdAt,
   }));
 
   return {

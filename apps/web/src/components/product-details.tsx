@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Product } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { addToCart } from "actions/cart.action";
+import { addToWishlist } from "actions/wishlist.action";
 
 export default function ProductDetails() {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -34,6 +35,23 @@ export default function ProductDetails() {
       alert("product added to cart");
     } catch (error) {
       console.error("Error deleting product:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToWishlistHandler = async () => {
+    try {
+      setLoading(true);
+      const response = await addToWishlist(productId);
+      if (response.error) {
+        console.error("Validation Error:", response.error.message);
+        alert(response.error.message);
+        return;
+      }
+      alert("Product added to wishlist");
+    } catch (error) {
+      console.error("Error while adding product to wishlist:", error);
     } finally {
       setLoading(false);
     }
@@ -205,7 +223,10 @@ export default function ProductDetails() {
                     </div>
                   )}
                 </button>
-                <button className="py-3 px-4 cursor-pointer rounded-lg bg-secondary-background text-primary-background ">
+                <button
+                  onClick={addToWishlistHandler}
+                  className="py-3 px-4 cursor-pointer rounded-lg bg-secondary-background text-primary-background "
+                >
                   <i className="ri-heart-line text-2xl"></i>
                 </button>
                 <button
