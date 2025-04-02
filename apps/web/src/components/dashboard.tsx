@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { boolean, z } from "zod";
 import { useForm } from "react-hook-form";
 import { updateAvatar, updateName } from "actions/user.action";
-import { Address } from "@prisma/client";
+import { Address, Order, OrderItem, OrderStatus } from "@prisma/client";
 import {
   createAddress,
   deleteAddress,
@@ -20,6 +20,7 @@ import {
   updateAddress,
 } from "actions/address.action";
 import { addressSchema } from "schemas/address-schema";
+import { getOrdersByUserId } from "actions/order.action";
 
 interface DashboardStats {
   totalOrders: number;
@@ -28,15 +29,23 @@ interface DashboardStats {
   paymentMethods: number;
 }
 
-interface RecentOrder {
-  id: string;
-  date: string;
-  status: "processing" | "shipped" | "delivered";
-  total: number;
-  items: Array<{
+interface ExtendedOrderItem extends OrderItem {
+  name: string;
+  image: string;
+}
+
+interface OrderWithItems extends Order {
+  items: ExtendedOrderItem[];
+  shippingAddress: {
     name: string;
-    image: string;
-  }>;
+    house: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    mobile: string;
+  };
 }
 
 const dashboardStats: DashboardStats = {
@@ -45,40 +54,6 @@ const dashboardStats: DashboardStats = {
   savedAddresses: 2,
   paymentMethods: 3,
 };
-
-const recentOrders: RecentOrder[] = [
-  {
-    id: "ORD-2024-001",
-    date: "2024-03-20",
-    status: "delivered",
-    total: 329.97,
-    items: [
-      {
-        name: "Nike Air Max 2024 Limited Edition",
-        image:
-          "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=150",
-      },
-      {
-        name: "Nike Zoom Pegasus 40",
-        image:
-          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150",
-      },
-    ],
-  },
-  {
-    id: "ORD-2024-002",
-    date: "2024-03-18",
-    status: "shipped",
-    total: 199.99,
-    items: [
-      {
-        name: "Nike Air Max 2024 Limited Edition",
-        image:
-          "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=150",
-      },
-    ],
-  },
-];
 
 type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
@@ -105,6 +80,7 @@ export default function Dashboard() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderWithItems[]>([]);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -180,16 +156,33 @@ export default function Dashboard() {
     }
   };
 
-  const getStatusColor = (status: RecentOrder["status"]) => {
+  const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-amber-100 text-amber-800";
-      case "delivered":
-        return "bg-green-100 text-green-800";
+      case OrderStatus.PROCESSING:
+        return "bg-amber-300/30 text-amber-500";
+      case OrderStatus.SHIPPED:
+        return "bg-sky-300/30 text-sky-500";
+      case OrderStatus.DELIVERED:
+        return "bg-emerald-300/30 text-emerald-500";
+      case OrderStatus.CANCELLED:
+        return "bg-red-300/30 text-red-500";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-300/30 text-slate-500";
+    }
+  };
+
+  const getStatusIcon = (status: OrderStatus) => {
+    switch (status) {
+      case OrderStatus.PROCESSING:
+        return <i className="ri-time-line text-lg"></i>;
+      case OrderStatus.SHIPPED:
+        return <i className="ri-truck-line text-lg"></i>;
+      case OrderStatus.DELIVERED:
+        return <i className="ri-checkbox-circle-line text-lg"></i>;
+      case OrderStatus.CANCELLED:
+        return <i className="ri-close-circle-line text-lg"></i>;
+      default:
+        return null;
     }
   };
 
@@ -202,6 +195,30 @@ export default function Dashboard() {
     }
     fetchAddresses();
   }, []);
+
+  useEffect(() => {
+    if (!user.id) return;
+    async function fetchOrders() {
+      const response = await getOrdersByUserId(user.id || "");
+      if (response.success) {
+        const formattedOrders = response.orders.map((order) => ({
+          ...order,
+          shippingAddress: order.shippingAddress || {},
+          items: order.orderItems.map((orderItem) => ({
+            id: orderItem.id,
+            productId: orderItem.product.id,
+            orderId: orderItem.orderId,
+            name: orderItem.product.name,
+            price: orderItem.price,
+            quantity: orderItem.quantity,
+            image: orderItem.product.images[0] || "",
+          })),
+        }));
+        setRecentOrders(formattedOrders.slice(0, 3));
+      }
+    }
+    fetchOrders();
+  }, [user.id]);
 
   const addressForm = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
@@ -520,15 +537,14 @@ export default function Dashboard() {
                       <div>
                         <h3 className="font-medium">{order.id}</h3>
                         <p className="text-sm text-secondary-foreground">
-                          {new Date(order.date).toLocaleDateString()}
+                          {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <div
-                        className={`px-3 py-1 rounded-full ${getStatusColor(order.status)}`}
+                        className={`px-3 py-1 rounded-full text-sm flex items-center space-x-1.5 ${getStatusColor(order.status)}`}
                       >
-                        <span className="text-sm capitalize">
-                          {order.status}
-                        </span>
+                        {getStatusIcon(order.status)}
+                        <span className="capitalize">{order.status}</span>
                       </div>
                     </div>
 
@@ -549,7 +565,9 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${order.total.toFixed(2)}</p>
+                        <p className="font-medium">
+                          ${order.totalPrice.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   </div>
