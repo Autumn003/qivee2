@@ -9,9 +9,10 @@ import { useForm } from "react-hook-form";
 import { addressSchema } from "schemas/address-schema";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
-import { getCart } from "actions/cart.action";
+import { clearCart, getCart } from "actions/cart.action";
 import { createOrder } from "actions/order.action";
 import { PaymentMethod } from "@prisma/client";
+import { useRouter } from "next/navigation";
 
 interface CartItemWithDetails {
   id: string;
@@ -24,6 +25,7 @@ interface CartItemWithDetails {
 
 export default function Checkout() {
   const { data: session } = useSession();
+  const router = useRouter();
 
   const [cartItems, setCartItems] = useState<CartItemWithDetails[]>([]);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
@@ -139,7 +141,8 @@ export default function Checkout() {
       if (response.success) {
         alert("Order placed successfully!");
         // Redirect to order confirmation page
-        window.location.href = "/order-success";
+        await clearCart();
+        router.push(`/order-success?orderId=${response.order.id}`);
       } else {
         alert("Error placing order: " + response.error);
       }

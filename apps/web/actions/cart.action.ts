@@ -105,3 +105,18 @@ export async function getCart() {
     message: "Cart items retrieved successfully",
   };
 }
+
+export async function clearCart() {
+  const session = await auth();
+  if (!session?.user || !session.user.id) {
+    return { error: { message: "Unauthorized request" } };
+  }
+  const userId = session.user.id;
+  const cartItems = await db.cartItem.deleteMany({
+    where: { userId },
+  });
+  return {
+    success: true,
+    message: "Cart cleared successfully",
+  };
+}
