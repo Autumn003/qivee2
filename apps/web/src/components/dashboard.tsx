@@ -73,7 +73,7 @@ export default function Dashboard() {
   const avatarForm = useForm<AvatarFormValues>({
     resolver: zodResolver(updateUserAvatarSchema),
     defaultValues: {
-      avatar: user.avatar || "",
+      avatar: undefined,
     },
   });
 
@@ -90,6 +90,9 @@ export default function Dashboard() {
     "overview"
   );
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -134,15 +137,26 @@ export default function Dashboard() {
       return;
     }
 
+    if (!selectedImage) {
+      console.error("Select an image to upload");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      const response = await updateAvatar(user.id, data.avatar);
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+
+      const response = await updateAvatar(user?.id || "", selectedImage);
 
       if (response?.error) {
         console.error("Validation Error:", response.error);
         return;
       }
+
+      setSelectedImage(null);
+      setPreview(null);
 
       await update({
         user: { ...session?.user, avatar: response.updatedUser.avatar },
@@ -153,6 +167,16 @@ export default function Dashboard() {
       console.error("Error updating avatar:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      avatarForm.setValue("avatar", file);
+      avatarForm.trigger("avatar");
+      setSelectedImage(file);
+      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -419,14 +443,32 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div>
+                        {/* Image Preview */}
+                        {preview ? (
+                          <img
+                            src={preview}
+                            alt="Preview"
+                            className="w-32 h-32 p-1 rounded-full mb-4 border border-secondary-foreground object-cover"
+                          />
+                        ) : user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="Avatar"
+                            className="w-32 h-32 p-1 rounded-full mb-4 border border-secondary-foreground object-cover"
+                          />
+                        ) : (
+                          <div className="w-32 h-32 p-1 rounded-full flex items-center justify-center overflow-hidden border border-secondary-foreground mb-4">
+                            <i className="ri-user-3-line text-7xl text-secondary-foreground"></i>
+                          </div>
+                        )}
                         <label className="block text-sm font-medium mb-1">
                           User Avatar
                         </label>
                         <input
-                          {...avatarForm.register("avatar")}
-                          type="text"
-                          placeholder="Enter avatar URL"
-                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20 cursor-pointer"
                         />
                         {avatarForm.formState.errors.avatar && (
                           <p className="mt-1 text-sm text-destructive">
@@ -572,6 +614,18 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ))}
+
+                {recentOrders.length === 0 && (
+                  <div className="text-center py-12">
+                    <i className="ri-box-1-line text-6xl text-muted-foreground"></i>
+                    <h2 className="mt-4 text-lg font-medium text-foreground">
+                      No orders found
+                    </h2>
+                    <p className="mt-2 text-secondary-foreground">
+                      You haven't placed any orders yet
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
