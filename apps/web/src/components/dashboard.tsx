@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut, signIn, getSession } from "next-auth/react";
 import { User } from "next-auth";
@@ -21,13 +21,7 @@ import {
 } from "actions/address.action";
 import { addressSchema } from "schemas/address-schema";
 import { getOrdersByUserId } from "actions/order.action";
-
-interface DashboardStats {
-  totalOrders: number;
-  wishlistItems: number;
-  savedAddresses: number;
-  paymentMethods: number;
-}
+import { getWishlist } from "actions/wishlist.action";
 
 interface ExtendedOrderItem extends OrderItem {
   name: string;
@@ -48,13 +42,6 @@ interface OrderWithItems extends Order {
   };
 }
 
-const dashboardStats: DashboardStats = {
-  totalOrders: 12,
-  wishlistItems: 5,
-  savedAddresses: 2,
-  paymentMethods: 3,
-};
-
 type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
 type AddressFormValues = z.infer<typeof addressSchema>;
@@ -62,6 +49,9 @@ type AddressFormValues = z.infer<typeof addressSchema>;
 export default function Dashboard() {
   const { data: session, update } = useSession();
   const user = session?.user ?? ({} as User);
+
+  const profileAddAddressButtonRef = useRef(null);
+  const addressSectionRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<UserNameFormValues>({
     resolver: zodResolver(updateUserNameSchema),
@@ -77,6 +67,7 @@ export default function Dashboard() {
     },
   });
 
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -93,6 +84,7 @@ export default function Dashboard() {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [shouldScrollToAddress, setShouldScrollToAddress] = useState(false);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -225,7 +217,7 @@ export default function Dashboard() {
     async function fetchOrders() {
       const response = await getOrdersByUserId(user.id || "");
       if (response.success) {
-        const formattedOrders = response.orders.map((order) => ({
+        const formatedOrders = response.orders.map((order) => ({
           ...order,
           shippingAddress: order.shippingAddress || {},
           items: order.orderItems.map((orderItem) => ({
@@ -238,10 +230,20 @@ export default function Dashboard() {
             image: orderItem.product.images[0] || "",
           })),
         }));
-        setRecentOrders(formattedOrders.slice(0, 3));
+        setRecentOrders(formatedOrders);
       }
     }
+    async function fetchWishlist() {
+      const response = await getWishlist();
+      if (response.success) {
+        setWishlistCount(response.wishlistItems.length);
+      } else {
+        console.error("Failed to fetch products:", response.error);
+      }
+    }
+
     fetchOrders();
+    fetchWishlist();
   }, [user.id]);
 
   const addressForm = useForm<AddressFormValues>({
@@ -322,6 +324,35 @@ export default function Dashboard() {
       setAddresses((prev) => prev.filter((addr) => addr.id !== id));
     }
   };
+
+  const handleOverviewAddAddress = () => {
+    // Change to profile tab
+    setActiveTab("profile");
+
+    // Wait for the DOM to update
+    setTimeout(() => {
+      // Trigger click on the profile add address button
+      if (profileAddAddressButtonRef.current) {
+        (profileAddAddressButtonRef.current as HTMLButtonElement).click();
+      }
+    }, 0);
+  };
+  useEffect(() => {
+    if (
+      activeTab === "profile" &&
+      shouldScrollToAddress &&
+      addressSectionRef.current
+    ) {
+      // Wait a bit to ensure DOM is updated
+      setTimeout(() => {
+        addressSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        setShouldScrollToAddress(false);
+      }, 100);
+    }
+  }, [activeTab, shouldScrollToAddress]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -518,9 +549,7 @@ export default function Dashboard() {
                   <i className="ri-box-1-line text-4xl"></i>
                   <i className="ri-arrow-right-s-line text-secondary-foreground text-xl"></i>
                 </div>
-                <p className="mt-4 text-2xl font-bold">
-                  {dashboardStats.totalOrders}
-                </p>
+                <p className="mt-4 text-2xl font-bold">{recentOrders.length}</p>
                 <p className="text-sm text-secondary-foreground">
                   Total Orders
                 </p>
@@ -534,9 +563,7 @@ export default function Dashboard() {
                   <i className="ri-heart-line text-4xl"></i>
                   <i className="ri-arrow-right-s-line text-secondary-foreground text-xl"></i>
                 </div>
-                <p className="mt-4 text-2xl font-bold">
-                  {dashboardStats.wishlistItems}
-                </p>
+                <p className="mt-4 text-2xl font-bold">{wishlistCount}</p>
                 <p className="text-sm text-secondary-foreground">
                   Wishlist Items
                 </p>
@@ -545,11 +572,14 @@ export default function Dashboard() {
               <div className="bg-card p-6 rounded-lg border border-muted-foreground">
                 <div className="flex items-center justify-between">
                   <i className="ri-map-pin-line text-4xl"></i>
-                  <i className="ri-add-line text-xl text-secondary-foreground"></i>
+                  <button
+                    id="overviewAddAddressButton"
+                    onClick={handleOverviewAddAddress}
+                  >
+                    <i className="ri-add-line text-xl text-secondary-foreground"></i>
+                  </button>
                 </div>
-                <p className="mt-4 text-2xl font-bold">
-                  {dashboardStats.savedAddresses}
-                </p>
+                <p className="mt-4 text-2xl font-bold">{addresses.length}</p>
                 <p className="text-sm text-secondary-foreground">
                   Saved Addresses
                 </p>
@@ -570,7 +600,7 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4">
-                {recentOrders.map((order) => (
+                {recentOrders.slice(0, 3).map((order) => (
                   <div
                     key={order.id}
                     className="bg-card rounded-lg border border-muted-foreground p-6"
@@ -666,13 +696,18 @@ export default function Dashboard() {
             </div>
 
             {/* Addresses */}
-            <div className="bg-card rounded-lg border border-muted-foreground p-6">
+            <div
+              ref={addressSectionRef}
+              className="bg-card rounded-lg border border-muted-foreground p-6"
+            >
               <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
                 <div className="flex items-center text-xl">
                   <i className="ri-map-pin-line mr-2"></i>
                   <h2 className="text-lg font-medium">Saved Address</h2>
                 </div>
                 <button
+                  id="profileAddAddressButton"
+                  ref={profileAddAddressButtonRef}
                   onClick={() => {
                     setEditingAddress(null);
                     addressForm.reset({
