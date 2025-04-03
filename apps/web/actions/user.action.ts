@@ -10,6 +10,17 @@ import {
 import { randomBytes } from "crypto";
 import { sendEmail } from "lib/mail";
 
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
 export async function createUser(formData: FormData) {
   const parsedData = registerSchema.safeParse(Object.fromEntries(formData));
   if (!parsedData.success) {
@@ -60,33 +71,66 @@ export async function updateName(id: string, name: string) {
   };
 }
 
-export async function updateAvatar(id: string, avatar: string) {
+export async function updateAvatar(id: string, file: File) {
   console.log("update avatar called");
 
-  if (!id || !avatar) {
+  if (!id || !file) {
     return { error: { message: "Invalid input" } };
   }
 
-  const parsedData = updateUserAvatarSchema.safeParse({ id, avatar });
-  if (!parsedData.success) {
-    return { error: parsedData.error.flatten() };
-  }
+  // Convert file to buffer for upload
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  // Save the file temporarily (optional, useful for debugging)
+  const tempPath = join("tmp", file.name);
+  await writeFile(tempPath, buffer);
 
   const user = await db.user.findUnique({ where: { id } });
   if (!user) {
     return { error: { id: "User not found" } };
   }
 
-  const updatedUser = await db.user.update({
-    where: { id },
-    data: { avatar },
-  });
+  try {
+    if (user.avatar) {
+      const publicId = user.avatar.split("/").pop()?.split(".")[0]; // Extract public ID
+      if (publicId) {
+        await cloudinary.uploader.destroy(`avatars/${publicId}`);
+      }
+    }
 
-  return {
-    success: true,
-    updatedUser,
-    message: "User avatar updated successfully",
-  };
+    const result = await cloudinary.uploader.upload(tempPath, {
+      folder: "avatars",
+      resource_type: "image",
+      crop: "scale",
+      width: 150,
+    });
+
+    await unlink(tempPath);
+
+    const updatedUser = await db.user.update({
+      where: { id },
+      data: { avatar: result.secure_url },
+    });
+    console.log("update user: ", updatedUser);
+    return {
+      success: true,
+      avatarUrl: result.secure_url,
+      updatedUser,
+      message: "User avatar updated successfully",
+    };
+  } catch (error) {
+    console.error("Cloudinary upload failed", error);
+
+    // Ensure local file is deleted even if upload fails
+    try {
+      await unlink(tempPath);
+    } catch (unlinkError) {
+      console.error("Failed to delete temporary file:", unlinkError);
+    }
+
+    return { error: { message: "Avatar upload failed" } };
+  }
 }
 
 export async function requestPasswordReset(email: string) {

@@ -5,7 +5,16 @@ export const updateUserNameSchema = z.object({
 });
 
 export const updateUserAvatarSchema = z.object({
-  avatar: z.string().url("Invalid avatar URL"),
+  avatar: z
+    .instanceof(File)
+    .refine(
+      (file) => file.size < 1 * 1024 * 1024,
+      "File size must be less than 1MB"
+    )
+    .refine(
+      (file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+      "Only JPG, PNG, and WEBP files are allowed"
+    ),
 });
 
 export const passwordSchema = z.object({
