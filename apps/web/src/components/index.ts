@@ -12,6 +12,8 @@ import Dashboard from "./dashboard";
 import Auth from "./auth";
 import AdminProducts from "./admin-products";
 import AdminOrders from "./admin-orders";
+import ForgetPassword from "./forget-password";
+import ResetPassword from "./reset-password";
 
 export {
   Header,
@@ -28,4 +30,6 @@ export {
   Auth,
   AdminProducts,
   AdminOrders,
+  ForgetPassword,
+  ResetPassword,
 };

@@ -193,8 +193,8 @@ export default function Auth() {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <Link
-                  href="/auth/forgot-password"
-                  className="font-medium text-primary hover:text-primary/80"
+                  href="/forget-password"
+                  className="font-medium text-primary hover:text-primary-foreground/80 transition-colors duration-150"
                 >
                   Forgot your password?
                 </Link>
