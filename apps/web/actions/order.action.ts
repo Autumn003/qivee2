@@ -2,6 +2,46 @@
 
 import db from "@repo/db/client";
 import { OrderStatus, UserRole, PaymentMethod } from "@prisma/client";
+import { sendEmail } from "lib/mail";
+
+const getOrderStatusMessage = (
+  userName: string,
+  orderId: string,
+  status: string
+) => {
+  let statusMessage = "";
+
+  switch (status) {
+    case OrderStatus.SHIPPED:
+      statusMessage = `🚀 Your order has been **shipped** and is on its way!`;
+      break;
+    case OrderStatus.DELIVERED:
+      statusMessage = `🎉 Your order has been **delivered** successfully!`;
+      break;
+    case OrderStatus.CANCELLED:
+      statusMessage = `❌ Your order has been **cancelled**. If this was a mistake, please contact our support team.`;
+      break;
+    default:
+      statusMessage = `ℹ️ Your order status has been updated to: ${status}.`;
+  }
+
+  return `Hello ${userName},  
+
+  ${statusMessage}  
+
+  🛍️Order Details:  
+  Order ID: ${orderId}  
+  Current Status: ${status}  
+
+
+
+  If you have any questions, feel free to reach out to our support team.  
+
+  Best Regards,  
+  The Qivee Team  
+  support@qivee.com | www.qivee.com  
+  `;
+};
 
 export async function createOrder(
   userId: string,
@@ -21,6 +61,14 @@ export async function createOrder(
 
     if (!address) {
       throw new Error("Invalid shipping address");
+    }
+
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
     }
 
     // Validate products and calculate total price
@@ -83,7 +131,46 @@ export async function createOrder(
       },
     });
 
-    return { success: true, order };
+    const formattedShippingAddress = `${address.name} \n${address.house}, ${address.street}, ${address.city}, ${address.state} - ${address.zipCode}, ${address.country}`;
+
+    const message = `Hello ${user.name},  
+
+    YOUR ORDER HAS BEEN PLACED SUCCESSFULLY!
+
+    Thank you for shopping with Qivee! Your order is confirmed, and we're preparing it for shipment.  
+
+    Order Details:  
+    Order ID: ${order.id}  
+    Total Amount: ${totalPrice}  
+    Payment Method: ${paymentMethod}  
+    Shipping To: ${formattedShippingAddress}
+    Contact: ${address.mobile}  
+
+    What Happens Next?  
+    - We will notify you once your order is shipped.  
+    - You can track your order status anytime in your account.  
+
+    Track your order here: www.qivee.com/orders 
+
+    If you have any questions, feel free to reach out to our support team.  
+
+    Happy shopping! 🛒  
+    Best Regards,  
+    The Qivee Team  
+    support@qivee.com | www.qivee.com  
+  `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Order Confirmation",
+        message,
+      });
+    } catch (error) {
+      console.error("Failed to send welcome email:", error);
+    }
+
+    return { success: true, order, message: "Order placed successfully" };
   });
 }
 
@@ -139,6 +226,7 @@ export async function cancelOrder(orderId: string, userId: string) {
 
   const order = await db.order.findUnique({
     where: { id: orderId },
+    include: { user: true },
   });
 
   if (!order) {
@@ -157,6 +245,21 @@ export async function cancelOrder(orderId: string, userId: string) {
     where: { id: orderId },
     data: { status: OrderStatus.CANCELLED },
   });
+
+  const emailMessage = getOrderStatusMessage(
+    order.user.name,
+    order.id,
+    OrderStatus.CANCELLED
+  );
+  try {
+    await sendEmail({
+      email: order.user.email,
+      subject: "Order Status Update",
+      message: emailMessage,
+    });
+  } catch (error) {
+    console.error("Failed to send welcome email:", error);
+  }
 
   return {
     success: true,
@@ -182,10 +285,29 @@ export async function updateOrderStatus(
     };
   }
 
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: { user: true },
+  });
+  if (!order) {
+    return { error: { message: "Order not found" } };
+  }
+
   const updatedOrder = await db.order.update({
     where: { id: orderId },
     data: { status },
   });
+
+  const emailMessage = getOrderStatusMessage(order.user.name, order.id, status);
+  try {
+    await sendEmail({
+      email: order.user.email,
+      subject: "Order Status Update",
+      message: emailMessage,
+    });
+  } catch (error) {
+    console.error("Failed to send welcome email:", error);
+  }
 
   return {
     success: true,
