@@ -4,15 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Lock,
-  ArrowLeft,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPassword } from "actions/user.action";

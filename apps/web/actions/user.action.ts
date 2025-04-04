@@ -184,7 +184,23 @@ export async function requestPasswordReset(email: string) {
   });
 
   const resetPasswordURL = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
-  const message = `Your password reset token is :- \n\n ${resetPasswordURL} \n\nIf you have not requested this email then, please ignore it.`;
+
+  const message = `Hello ${user.name},
+
+We received a request to reset your password for your Qivee account. No worries — we’ve got you! 🔐
+
+Click the link below to securely reset your password:
+
+${resetPasswordURL}
+
+⚠️ If you did *not* request this, please ignore this email. Your account will remain secure.
+
+For any help, feel free to reach out to our support team.
+
+Stay safe,  
+The Qivee Team  
+support@qivee.com | www.qivee.com  
+`;
 
   await sendEmail({
     email: user.email,
