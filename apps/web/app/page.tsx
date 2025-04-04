@@ -1,8 +1,6 @@
 import { FeaturedCard } from "@/components";
 import { Carousel } from "@/components/carousel";
-import db from "@repo/db/client";
 import Link from "next/link";
-
 export default function Home() {
   const heroSlides = [
     {
@@ -83,6 +81,60 @@ export default function Home() {
       image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
     },
   ];
+
+  const features = [
+    {
+      icon: "ri-shopping-bag-3-line",
+      title: "Premium Selection",
+      description:
+        "Curated collection of high-quality footwear from top brands",
+    },
+    {
+      icon: "ri-truck-line",
+      title: "Fast Delivery",
+      description: "Free shipping on orders over ₹999 with 3-day delivery",
+    },
+    {
+      icon: "ri-shield-line",
+      title: "Secure Shopping",
+      description: "100% secure payment processing and buyer protection",
+    },
+  ];
+
+  const whyChooseUs = [
+    {
+      icon: "ri-award-line",
+      title: "Authentic Products",
+      description:
+        "100% authentic products directly from manufacturers with quality assurance",
+      stat: "100+",
+      statLabel: "Genuine Products",
+    },
+    {
+      icon: "ri-refresh-line",
+      title: "Easy Returns",
+      description:
+        "Hassle-free 15-day returns with our no-questions-asked policy",
+      stat: "15",
+      statLabel: "Day Returns",
+    },
+    {
+      icon: "ri-time-line",
+      title: "Fast Shipping",
+      description:
+        "Quick delivery with real-time tracking and updates on your order",
+      stat: "Fast",
+      statLabel: "Delivery",
+    },
+    {
+      icon: "ri-headphone-line",
+      title: "24/7 Support",
+      description: "Round-the-clock customer support to assist you anytime",
+      stat: "24/7",
+      statLabel: "Support",
+    },
+  ];
+
   return (
     <div>
       {/* Hero Section */}
@@ -139,56 +191,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="bg-muted-background py-16 mb-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <i className="ri-box-1-line text-4xl "> </i>
-              <h3 className="font-semibold mb-2 mt-5">Free Shipping</h3>
-              <p className="text-sm text-gray-600">On orders over ₹299</p>
-            </div>
-            <div className="text-center">
-              <i className="ri-truck-line text-4xl "></i>
-              <h3 className="font-semibold mb-2 mt-5">Fast Delivery</h3>
-              <p className="text-sm text-gray-600">2-3 business days</p>
-            </div>
-            <div className="text-center">
-              <i className="ri-shield-line text-4xl"></i>
-              <h3 className="font-semibold mb-2 mt-5">Secure Payment</h3>
-              <p className="text-sm text-gray-600">100% secure checkout</p>
-            </div>
-            <div className="text-center">
-              <i className="ri-customer-service-line text-4xl"></i>
-              <h3 className="font-semibold mb-2 mt-5">24/7 Support</h3>
-              <p className="text-sm text-gray-600">Here to help</p>
-            </div>
+      {/* Features Section */}
+      <section className="py-16 bg-muted-background/30 dark:bg-muted-background/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-card rounded-lg border border-muted-foreground p-6 hover:border-primary-foreground/50 transition-colors duration-200"
+              >
+                <i className={`${feature.icon} text-4xl`}></i>
+                <h3 className="mt-4 text-lg font-medium">{feature.title}</h3>
+                <p className="mt-2 text-secondary-foreground/50">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="container mx-auto mb-20">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">
-            Subscribe to our newsletter
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Get 10% off your first order and stay updated with the latest trends
-          </p>
-          <form className="flex md:flex-row flex-col gap-4">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring focus:ring-black"
-            />
-            <button
-              type="submit"
-              className="px-8 py-2 bg-primary-foreground text-primary-background rounded-full cursor-pointer transition-colors"
-            >
-              Subscribe
-            </button>
-          </form>
+      {/* why choose us */}
+      <section className="py-16 bg-muted-background/30 dark:bg-muted-background/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold">Why Choose Us</h2>
+            <p className="mt-4 text-lg text-secondary-foreground">
+              We're committed to providing the best shopping experience
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {whyChooseUs.map((item, index) => (
+              <div
+                key={index}
+                className="bg-muted-background/40 rounded-lg border border-muted-foreground p-6 hover:border-primary-foreground/50 transition-colors duration-200"
+              >
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-secondary-background/10">
+                  <i className={`${item.icon} text-2xl`}></i>
+                </div>
+                <div className="mt-4 text-2xl font-bold">{item.stat}</div>
+                <div className="text-sm">{item.statLabel}</div>
+                <h3 className="mt-4 text-lg font-medium">{item.title}</h3>
+                <p className="mt-2 text-sm text-secondary-foreground/50">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
