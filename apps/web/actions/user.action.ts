@@ -3,16 +3,14 @@
 import db from "@repo/db/client";
 import bcrypt from "bcrypt";
 import { registerSchema } from "schemas/register-schema";
-import {
-  updateUserAvatarSchema,
-  updateUserNameSchema,
-} from "schemas/user-schema";
+import { updateUserNameSchema } from "schemas/user-schema";
 import { randomBytes } from "crypto";
 import { sendEmail } from "lib/mail";
 
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { v2 as cloudinary } from "cloudinary";
+import { auth } from "../../web/lib/auth";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -258,4 +256,67 @@ export async function resetPassword(token: string, newPassword: string) {
     console.error("Failed to send password changed email:", error);
   }
   return { success: true, message: "Password reset successfully" };
+}
+
+export async function updatePassword(oldPassword: string, newPassword: string) {
+  const session = await auth();
+  const userId = session?.user.id;
+
+  if (!userId) {
+    return { error: { message: "Unauthorised request" } };
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return { error: { message: "User not found" } };
+  }
+
+  const isValidOldPassword = await bcrypt.compare(oldPassword, user.password);
+  if (!isValidOldPassword) {
+    return { error: { message: "Incorrect old password" } };
+  }
+
+  if (isValidOldPassword) {
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await db.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword },
+    });
+  }
+
+  const message = `Hello ${user.name},
+
+  We wanted to let you know that your password was successfully changed. If you made this change, no further action is needed.
+
+  If you didn’t request this change, please reset your password immediately or contact our support team for assistance.
+
+  🔒 Stay Secure:
+
+  Never share your password with anyone.
+
+  Use a strong, unique password for your account.
+
+  Enable two-factor authentication if available.
+
+  If you have any questions, feel free to reach out to us.
+
+  Best Regards,  
+    The Qivee Team  
+    support@qivee.com | www.qivee.com
+  `;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Successful",
+      message,
+    });
+  } catch (error) {
+    console.error("Failed to send password changed email:", error);
+  }
+
+  return { success: true, message: "Password updated successfully" };
 }

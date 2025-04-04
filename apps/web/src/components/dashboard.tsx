@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useSession, signOut, signIn, getSession } from "next-auth/react";
 import { User } from "next-auth";
 import {
+  updatePasswordSchema,
   updateUserAvatarSchema,
   updateUserNameSchema,
 } from "schemas/user-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { boolean, z } from "zod";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { updateAvatar, updateName } from "actions/user.action";
+import { updateAvatar, updateName, updatePassword } from "actions/user.action";
 import { Address, Order, OrderItem, OrderStatus } from "@prisma/client";
 import {
   createAddress,
@@ -45,6 +46,7 @@ interface OrderWithItems extends Order {
 type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
 type AddressFormValues = z.infer<typeof addressSchema>;
+type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
 
 export default function Dashboard() {
   const { data: session, update } = useSession();
@@ -67,6 +69,15 @@ export default function Dashboard() {
     },
   });
 
+  const passwordForm = useForm<UpdatePasswordFormValues>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
@@ -75,6 +86,9 @@ export default function Dashboard() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpdatePasswordModelOpen, setIsUpdatePasswordModelOpen] =
+    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editAvatar, setEditAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "profile">(
@@ -91,6 +105,14 @@ export default function Dashboard() {
     setEditAvatar(false);
     form.reset({
       name: user.name || "",
+    });
+  };
+  const handleClosePasswordModel = () => {
+    setIsUpdatePasswordModelOpen(false);
+    passwordForm.reset({
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
   };
 
@@ -116,6 +138,31 @@ export default function Dashboard() {
       });
 
       handleCloseModal();
+    } catch (error) {
+      console.error("Error updating name:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onUpdatePasswordSubmit = async (data: UpdatePasswordFormValues) => {
+    if (!user.id) {
+      console.error("User ID is missing");
+      return;
+    }
+    console.log("update password submit callled");
+
+    try {
+      setIsLoading(true);
+
+      const response = await updatePassword(data.oldPassword, data.newPassword);
+
+      if (response?.error) {
+        console.error("Validation Error:", response.error);
+        return;
+      }
+
+      handleClosePasswordModel();
     } catch (error) {
       console.error("Error updating name:", error);
     } finally {
@@ -537,6 +584,114 @@ export default function Dashboard() {
           </div>
         )}
 
+        {isUpdatePasswordModelOpen && (
+          <div className="fixed inset-0 bg-primary-background/90 backdrop-blur-sm z-50">
+            <div className="fixed inset-0 flex items-center justify-center p-4 ">
+              <div className="bg-late-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-muted-foreground custom-scrollbar">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">Update password</h2>
+                    <button
+                      onClick={handleClosePasswordModel}
+                      className="p-2 hover:bg-secondary rounded-md text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                    >
+                      <i className="ri-close-line text-2xl"></i>
+                    </button>
+                  </div>
+
+                  <form
+                    onSubmit={passwordForm.handleSubmit(onUpdatePasswordSubmit)}
+                    className="space-y-6"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Old Password
+                      </label>
+                      <input
+                        {...passwordForm.register("oldPassword")}
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                      />
+                      {passwordForm.formState.errors.oldPassword && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {passwordForm.formState.errors.oldPassword.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          {...passwordForm.register("newPassword")}
+                          className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
+                        >
+                          {showPassword ? (
+                            <i className="ri-eye-off-line"></i>
+                          ) : (
+                            <i className="ri-eye-line"></i>
+                          )}
+                        </button>
+                      </div>
+                      {passwordForm.formState.errors.newPassword && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {passwordForm.formState.errors.newPassword.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Confirm Password
+                      </label>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        {...passwordForm.register("confirmPassword")}
+                        className="w-full px-3 py-2 border border-muted-foreground rounded-md focus:outline-none focus:ring focus:ring-primary-foreground/20"
+                      />
+                      {passwordForm.formState.errors.confirmPassword && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {
+                            passwordForm.formState.errors.confirmPassword
+                              .message
+                          }
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end space-x-4 pt-6">
+                      <button
+                        type="button"
+                        onClick={handleCloseModal}
+                        className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer transition-colors duration-150"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary-foreground/80 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer"
+                      >
+                        {isLoading && (
+                          <div className="animate-spin">
+                            <i className="ri-loader-4-line text-lg"></i>
+                          </div>
+                        )}
+                        Update
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === "overview" && (
           <div className="space-y-8 mb-20">
             {/* Quick Stats */}
@@ -664,27 +819,35 @@ export default function Dashboard() {
         {activeTab === "profile" && (
           <div className="space-y-8">
             {/* Personal Information */}
-            <div className="bg-card rounded-lg border border-muted-foreground p-6">
+            <div className="rounded-lg border border-muted-foreground p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">Personal Information</h2>
                 <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
+                  onClick={() => setIsUpdatePasswordModelOpen(true)}
+                  className="px-4 py-2 text-secondary-foreground border border-secondary-foreground rounded-lg hover:text-primary-foreground hover:border-primary-foreground transition-colors duration-150 cursor-pointer"
                 >
-                  <i className="ri-edit-box-line text-xl"></i>
+                  Update Password
                 </button>
               </div>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-secondary-foreground">
-                    Full Name
-                  </label>
-                  <p className="mt-1 font-medium">
-                    {user.name
-                      ?.toString()
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </p>
+                <div className="flex gap-3 items-end">
+                  <div>
+                    <label className="text-sm text-secondary-foreground">
+                      Full Name
+                    </label>
+                    <p className="mt-1 font-medium">
+                      {user.name
+                        ?.toString()
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
+                  >
+                    <i className="ri-edit-box-line text-xl"></i>
+                  </button>
                 </div>
                 <div>
                   <label className="text-sm text-secondary-foreground">

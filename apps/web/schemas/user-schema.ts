@@ -29,3 +29,18 @@ export const passwordSchema = z.object({
       "Password must contain at least one special character"
     ),
 });
+
+export const updatePasswordSchema = z
+  .object({
+    oldPassword: passwordSchema.shape.password,
+    newPassword: passwordSchema.shape.password,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.oldPassword !== data.newPassword, {
+    message: "New password can't be the same as old password",
+    path: ["newPassword"],
+  });
