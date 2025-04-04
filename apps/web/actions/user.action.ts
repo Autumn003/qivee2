@@ -39,6 +39,42 @@ export async function createUser(formData: FormData) {
     data: { name, email, password: hashedPassword },
   });
 
+  const message = `Hello ${name},  
+
+  Welcome to Qivee! 🎉  
+  
+  We're thrilled to have you join our community of savvy shoppers. Your journey to discovering amazing products, exclusive deals, and seamless shopping starts now!  
+  
+  🛍️ What You Can Expect:  
+  Exclusive discounts & offers  
+  A wide range of high-quality products  
+  Fast & secure checkout  
+  24/7 customer support  
+  
+  Start exploring now: www.qivee.com  
+  
+  If you have any questions, our support team is always here to help.  
+  
+  Happy shopping! 🛒  
+  Best Regards,  
+  The Qivee Team  
+  support@qivee.com | www.qivee.com  
+  `;
+
+  try {
+    await sendEmail({
+      email,
+      subject: "Welcome to Qivee",
+      message,
+    });
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+    return {
+      success: true,
+      message: "User registered successfully, but email failed to send.",
+    };
+  }
+
   return { success: true };
 }
 
@@ -175,5 +211,35 @@ export async function resetPassword(token: string, newPassword: string) {
     data: { password: hashedPassword, resetToken: null, resetExpiry: null },
   });
 
+  const message = `Hello ${user.name},
+
+    We wanted to let you know that your password was successfully changed. If you made this change, no further action is needed.
+
+    If you didn’t request this change, please reset your password immediately or contact our support team for assistance.
+
+    🔒 Stay Secure:
+
+    Never share your password with anyone.
+
+    Use a strong, unique password for your account.
+
+    Enable two-factor authentication if available.
+
+    If you have any questions, feel free to reach out to us.
+
+    Best Regards,  
+      The Qivee Team  
+      support@qivee.com | www.qivee.com
+    `;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Successful",
+      message,
+    });
+  } catch (error) {
+    console.error("Failed to send password changed email:", error);
+  }
   return { success: true, message: "Password reset successfully" };
 }

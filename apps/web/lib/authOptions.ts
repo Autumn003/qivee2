@@ -2,6 +2,7 @@ import db from "@repo/db/client";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcrypt";
+import { sendEmail } from "./mail";
 
 export const authOptions = {
   providers: [
@@ -67,6 +68,42 @@ export const authOptions = {
       }
 
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }: any) {
+      if (user.email) {
+        const message = `Hello ${user.name},  
+
+        👋 Welcome back to Qivee!  
+
+        It's great to see you again. We’ve got fresh new arrivals, exclusive deals, and personalized recommendations waiting just for you.  
+
+        Here’s what’s new since your last visit:  
+        Trending products you might love  
+        Special discounts & limited-time offers  
+        Faster checkout for a seamless shopping experience  
+
+        Ready to continue your shopping journey? Start here: www.qivee.com  
+
+        If you need any help, we're just a message away!  
+
+        Happy shopping! 🛒  
+        Best Regards,  
+        The Qivee Team  
+        support@qivee.com | www.qivee.com  
+        `;
+
+        try {
+          await sendEmail({
+            email: user.email,
+            subject: "Welcome back to Qivee",
+            message,
+          });
+        } catch (error) {
+          console.error("Failed to send welcome email:", error);
+        }
+      }
     },
   },
 };
