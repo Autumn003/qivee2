@@ -13,6 +13,7 @@ import { clearCart, getCart } from "actions/cart.action";
 import { createOrder } from "actions/order.action";
 import { PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface CartItemWithDetails {
   id: string;
@@ -50,8 +51,14 @@ export default function Checkout() {
   useEffect(() => {
     async function fetchAddresses() {
       const response = await getUserAddresses();
+
       if (response.success) {
-        setSavedAddresses(response.addresses);
+        setSavedAddresses(response?.addresses);
+        if (response.addresses.length > 0) {
+          setSelectedAddress(
+            response.addresses.find((addr) => addr.isDefault)?.id || ""
+          );
+        }
       }
     }
     fetchAddresses();
@@ -123,33 +130,80 @@ export default function Checkout() {
       return;
     }
 
-    if (paymentMethod === "COD") {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      const response = await createOrder(
-        session?.user.id || "", // userId
-        selectedAddress, // addressId
-        paymentMethod, // paymentMethod
+    if (paymentMethod === PaymentMethod.COD) {
+      // Handle COD Order
+      const response: any = await createOrder(
+        session?.user.id || "",
+        selectedAddress,
+        paymentMethod,
         cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-        })) // items
+        }))
       );
 
       setIsLoading(false);
 
       if (response.success) {
         alert("Order placed successfully!");
-        // Redirect to order confirmation page
         await clearCart();
         router.push(`/order-success?orderId=${response.order.id}`);
       } else {
         alert("Error placing order: " + response.error);
       }
     } else {
-      // Redirect to payment page or integrate payment gateway
-      alert("Redirecting to payment gateway...");
+      // Handle PhonePe Payment
+      try {
+        const { data } = await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/phonepe/initiate`,
+          {
+            userId: session?.user.id,
+            addressId: selectedAddress,
+            amount: total,
+            name: session?.user.name,
+            mobile:
+              savedAddresses.find((addr) => addr.id === selectedAddress)
+                ?.mobile || "9999999999",
+            items: cartItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            })),
+          }
+        );
+
+        setIsLoading(false);
+
+        if (data.success && data.redirectUrl) {
+          // Store order info in localStorage for reference after payment
+          localStorage.setItem("currentOrderId", data.orderId);
+          localStorage.setItem("currentTransactionId", data.transactionId);
+
+          // Clear cart before redirecting
+          await clearCart();
+
+          // Redirect to PhonePe
+          window.location.href = data.redirectUrl;
+        } else {
+          alert(
+            "Payment initiation failed: " + (data.error || "Unknown error")
+          );
+        }
+      } catch (error: any) {
+        console.error("PhonePe payment error:", error);
+        alert(
+          "Payment initiation failed: " +
+            (error.response?.data?.error || error.message || "Unknown error")
+        );
+        setIsLoading(false);
+      }
     }
+    // else {
+    //   // Handle other payment methods
+    //   alert("This payment method is not yet implemented.");
+    //   setIsLoading(false);
+    // }
   };
 
   return (

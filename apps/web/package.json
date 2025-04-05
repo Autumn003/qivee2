@@ -18,6 +18,7 @@
     "@repo/ui": "*",
     "@tailwindcss/postcss": "^4.0.12",
     "@types/bcrypt": "^5.0.2",
+    "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.0",
@@ -32,6 +33,7 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.12",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
