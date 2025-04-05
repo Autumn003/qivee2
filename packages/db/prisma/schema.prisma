@@ -58,6 +58,7 @@ model Order {
   totalPrice        Float
   status            OrderStatus   @default(PROCESSING)
   paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(PENDING)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   userId            String
@@ -75,7 +76,21 @@ model Order {
   shippingCountry String
   shippingMobile  String
 
-  orderItems OrderItem[]
+  orderItems  OrderItem[]
+  transaction Transaction?
+}
+
+model Transaction {
+  id                  String        @id @default(uuid())
+  orderId             String        @unique
+  order               Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  phonePeTxnId        String?       @unique
+  amount              Float
+  status              PaymentStatus @default(PENDING)
+  paymentMethod       PaymentMethod
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  phonePeResponseJson String? // Store raw response for reference
 }
 
 model OrderItem {
@@ -133,8 +148,16 @@ enum productCategory {
   women_bagpacks
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
 enum PaymentMethod {
   COD
   CARD
   UPI
+  PHONEPE
 }
