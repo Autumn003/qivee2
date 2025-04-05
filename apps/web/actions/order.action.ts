@@ -1,7 +1,12 @@
 "use server";
 
 import db from "@repo/db/client";
-import { OrderStatus, UserRole, PaymentMethod } from "@prisma/client";
+import {
+  OrderStatus,
+  UserRole,
+  PaymentMethod,
+  PaymentStatus,
+} from "@prisma/client";
 import { sendEmail } from "lib/mail";
 
 const getOrderStatusMessage = (
@@ -53,64 +58,56 @@ export async function createOrder(
     return { error: "Invalid order data" };
   }
 
-  return await db.$transaction(async (tx) => {
-    // Fetch the address snapshot
-    const address = await tx.address.findUnique({
+  try {
+    // Fetch the address
+    const address = await db.address.findUnique({
       where: { id: addressId },
     });
 
     if (!address) {
-      throw new Error("Invalid shipping address");
+      return { error: "Invalid shipping address" };
     }
 
-    const user = await tx.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new Error("User not found");
+      return { error: "User not found" };
     }
 
     // Validate products and calculate total price
-    const orderItems = await Promise.all(
-      items.map(async ({ productId, quantity }) => {
-        const product = await tx.product.findUnique({
-          where: { id: productId },
-        });
+    let totalPrice = 0;
+    const orderItems = [];
 
-        if (!product || product.stock < quantity) {
-          throw new Error(
-            `Product ${productId} is out of stock or unavailable.`
-          );
-        }
+    for (const { productId, quantity } of items) {
+      const product = await db.product.findUnique({
+        where: { id: productId },
+      });
 
-        // Decrease stock
-        await tx.product.update({
-          where: { id: productId },
-          data: { stock: product.stock - quantity },
-        });
-
+      if (!product || product.stock < quantity) {
         return {
-          product: { connect: { id: productId } }, // Connect existing product
-          quantity,
-          price: product.price,
+          error: `Product ${productId} is out of stock or unavailable.`,
         };
-      })
-    );
+      }
 
-    const totalPrice = orderItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+      totalPrice += product.price * quantity;
+      orderItems.push({
+        product: { connect: { id: productId } },
+        quantity,
+        price: product.price,
+      });
+    }
 
     // Create the order with address snapshot
-    const order = await tx.order.create({
+    const order = await db.order.create({
       data: {
         userId,
         totalPrice,
-        status: OrderStatus.PROCESSING,
+        status: "PROCESSING",
         shippingAddressId: addressId,
         paymentMethod,
+        paymentStatus: PaymentStatus.PENDING,
 
         // Store snapshot of address details
         shippingName: address.name,
@@ -131,47 +128,11 @@ export async function createOrder(
       },
     });
 
-    const formattedShippingAddress = `${address.name} \n${address.house}, ${address.street}, ${address.city}, ${address.state} - ${address.zipCode}, ${address.country}`;
-
-    const message = `Hello ${user.name},  
-
-    YOUR ORDER HAS BEEN PLACED SUCCESSFULLY!
-
-    Thank you for shopping with Qivee! Your order is confirmed, and we're preparing it for shipment.  
-
-    Order Details:  
-    Order ID: ${order.id}  
-    Total Amount: ${totalPrice}  
-    Payment Method: ${paymentMethod}  
-    Shipping To: ${formattedShippingAddress}
-    Contact: ${address.mobile}  
-
-    What Happens Next?  
-    - We will notify you once your order is shipped.  
-    - You can track your order status anytime in your account.  
-
-    Track your order here: www.qivee.com/orders 
-
-    If you have any questions, feel free to reach out to our support team.  
-
-    Happy shopping! 🛒  
-    Best Regards,  
-    The Qivee Team  
-    support@qivee.com | www.qivee.com  
-  `;
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: "Order Confirmation",
-        message,
-      });
-    } catch (error) {
-      console.error("Failed to send welcome email:", error);
-    }
-
-    return { success: true, order, message: "Order placed successfully" };
-  });
+    return { success: true, order };
+  } catch (error) {
+    console.error("Error creating order:", error);
+    return { error: "Failed to create order" };
+  }
 }
 
 export async function getOrdersByUserId(userId: string) {
@@ -346,5 +307,74 @@ export async function getAllOrders() {
     success: true,
     orders,
     message: "All orders retrieved successfully!",
+  };
+}
+
+export async function updateOrderTransactionStatus(
+  phonePeTxnId: string,
+  paymentStatus: PaymentStatus,
+  phonePeResponseJson: string
+) {
+  if (!phonePeTxnId || !paymentStatus) {
+    return { error: "Invalid inputs" };
+  }
+
+  // Find the transaction using PhonePe Transaction ID
+  const transaction = await db.transaction.findUnique({
+    where: { phonePeTxnId },
+    include: { order: { include: { user: true } } },
+  });
+
+  if (!transaction) {
+    return { error: "Transaction not found" };
+  }
+
+  // Update transaction status
+  const updatedTransaction = await db.transaction.update({
+    where: { phonePeTxnId },
+    data: {
+      status: paymentStatus,
+      phonePeResponseJson, // Store raw response for reference
+    },
+  });
+
+  // Update the related order status based on payment status
+  let updatedOrder;
+  if (paymentStatus === PaymentStatus.SUCCESS) {
+    updatedOrder = await db.order.update({
+      where: { id: transaction.orderId },
+      data: {
+        status: OrderStatus.PROCESSING,
+        paymentStatus: PaymentStatus.SUCCESS,
+      },
+    });
+  } else if (paymentStatus === PaymentStatus.FAILED) {
+    updatedOrder = await db.order.update({
+      where: { id: transaction.orderId },
+      data: {
+        status: OrderStatus.CANCELLED,
+        paymentStatus: PaymentStatus.FAILED,
+      },
+    });
+  }
+
+  // Send email notification to the user
+  const user = transaction.order.user;
+  const emailMessage = `Dear ${user.name}, your payment for order #${transaction.orderId} is ${paymentStatus}.`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Payment Status Update",
+      message: emailMessage,
+    });
+  } catch (error) {
+    console.error("Failed to send email:", error);
+  }
+
+  return {
+    success: true,
+    transaction: updatedTransaction,
+    order: updatedOrder,
+    message: "Transaction status updated successfully",
   };
 }
