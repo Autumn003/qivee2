@@ -65,7 +65,7 @@ export default function Featured() {
           );
           setFeaturedProducts(featuredProducts);
 
-          const newArrivals = response.products.slice(0, 0);
+          const newArrivals = response.products.slice(0, 4);
 
           setnewArrivals(newArrivals);
         }
