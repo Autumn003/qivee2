@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      redirectUrl = `/order-success?orderId=${orderId}`;
+      redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order-success?orderId=${orderId}`;
     } else if (code === "PAYMENT_ERROR" || code === "PAYMENT_FAILED") {
       // Update transaction status if needed
       if (transaction.status === PaymentStatus.PENDING) {
@@ -73,16 +73,16 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      redirectUrl = `/order-failure?orderId=${orderId}`;
+      redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order-failure?orderId=${orderId}`;
     } else {
       // Check the current status in our database
       if (transaction.status === PaymentStatus.SUCCESS) {
-        redirectUrl = `/order-success?orderId=${orderId}`;
+        redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order-success?orderId=${orderId}`;
       } else if (transaction.status === PaymentStatus.FAILED) {
-        redirectUrl = `/order-failure?orderId=${orderId}`;
+        redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order-failure?orderId=${orderId}`;
       } else {
         // Still pending, redirect to a pending page
-        redirectUrl = `/order-pending?orderId=${orderId}`;
+        redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order-pending?orderId=${orderId}`;
       }
     }
 
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
     console.error("Error processing payment status:", error);
     return NextResponse.redirect(
       new URL(
-        `/order-failure?orderId=${orderId}&reason=processing_error`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/order-failure?orderId=${orderId}&reason=processing_error`,
         req.url
       )
     );

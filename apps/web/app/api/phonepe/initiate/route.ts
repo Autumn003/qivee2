@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       amount: amountInPaise,
       redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/phonepe/status?id=${merchantTransactionId}&orderId=${order.id}`,
       redirectMode: "REDIRECT",
-      callbackUrl: `https://0306-103-214-60-29.ngrok-free.app/api/phonepe/webhook`,
+      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/phonepe/webhook`,
       mobileNumber: mobile,
       paymentInstrument: {
         type: "PAY_PAGE",
