@@ -46,10 +46,10 @@ export const Header = () => {
             New Arrivals
           </Link>
           <Link
-            href="/trending"
+            href="/featured"
             className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
           >
-            Trending
+            Featured
           </Link>
           <Link
             href="/accesories"
@@ -117,10 +117,10 @@ export const Header = () => {
               New Arrivals
             </Link>
             <Link
-              href="/trending"
+              href="/featured"
               className="text-secondary-foreground transition-colors duration-200 hover:cursor-pointer"
             >
-              Trending
+              Featured
             </Link>
             <Link
               href="/accesories"
@@ -143,7 +143,7 @@ export const Header = () => {
               <i className="ri-shopping-cart-line"></i>
             </Link>
             <Link
-              href="/profile"
+              href="/dashboard"
               className="text-secondary-foreground hover:text-primary-foreground text-2xl transition-colors duration-200 hover:cursor-pointer"
             >
               <i className="ri-user-line"></i>

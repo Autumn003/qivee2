@@ -82,8 +82,6 @@ export default function Wishlist() {
     fetchCartItems();
   }, []);
 
-  console.log("wishlist items: ", wishlist);
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -126,7 +124,7 @@ export default function Wishlist() {
                 className="rounded-lg border border-muted-foreground p-6"
               >
                 <div className="flex items-start space-x-6">
-                  <div className="h-32 w-32 flex-shrink-0">
+                  <div className="md:h-32 md:w-32 h-20 w-20  flex-shrink-0">
                     <img
                       src={item.image}
                       alt={item.name}
@@ -134,14 +132,36 @@ export default function Wishlist() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href={`/products/${item.productId}`}
-                        className="text-lg font-medium hover:text-secondary-foreground flex items-center transition-colors duration-150"
+                    <Link
+                      href={`/products/${item.productId}`}
+                      className="text-lg font-medium flex items-center"
+                    >
+                      {item.name}
+                      <i className="ri-arrow-right-up-line ml-1"></i>
+                    </Link>
+                    <div className="mt-2 flex items-start space-x-4">
+                      <p className="text-lg font-medium">
+                        ${item.price.toFixed(2)}
+                      </p>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          item.stock > 0
+                            ? "bg-emerald-100 text-emerald-500"
+                            : "bg-red-100 text-red-500"
+                        }`}
                       >
-                        {item.name}
-                        <i className="ri-arrow-right-up-line ml-1"></i>
-                      </Link>
+                        {item.stock > 0 ? "In Stock" : "Out of Stock"}
+                      </span>
+                    </div>
+                    <div className=" flex justify-between flex-col md:flex-row md:items-center items-start">
+                      <p className="mt-2 text-sm text-secondary-foreground">
+                        Added on{" "}
+                        {new Date(item.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
                       <div className="flex items-center space-x-4">
                         <button
                           onClick={() => addToCartHandler(item.productId)}
@@ -165,28 +185,6 @@ export default function Wishlist() {
                         </button>
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center space-x-4">
-                      <p className="text-lg font-medium">
-                        ${item.price.toFixed(2)}
-                      </p>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          item.stock > 0
-                            ? "bg-emerald-100 text-emerald-500"
-                            : "bg-red-100 text-red-500"
-                        }`}
-                      >
-                        {item.stock > 0 ? "In Stock" : "Out of Stock"}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-secondary-foreground">
-                      Added on{" "}
-                      {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
                   </div>
                 </div>
               </div>
