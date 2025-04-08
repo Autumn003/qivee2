@@ -33,6 +33,7 @@ model Product {
   stock       Int
   images      String[]
   category    productCategory
+  isFeatured  Boolean         @default(false)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   orderItems  OrderItem[]
