@@ -1,14 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Heart,
-  Trash2,
-  ShoppingCart,
-  Search,
-  Package,
-  ArrowUpRight,
-} from "lucide-react";
 import Link from "next/link";
 import { getWishlist, removeFromWishlist } from "actions/wishlist.action";
 import { addToCart } from "actions/cart.action";
