@@ -14,6 +14,7 @@ import AdminProducts from "./admin-products";
 import AdminOrders from "./admin-orders";
 import ForgetPassword from "./forget-password";
 import ResetPassword from "./reset-password";
+import NewArrivals from "./new-arrivals";
 
 export {
   Header,
@@ -32,4 +33,5 @@ export {
   AdminOrders,
   ForgetPassword,
   ResetPassword,
+  NewArrivals,
 };
