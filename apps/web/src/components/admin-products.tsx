@@ -11,6 +11,7 @@ import {
   getAllProducts,
   updateProduct,
 } from "actions/product.action";
+import { toast } from "sonner";
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
@@ -84,6 +85,7 @@ export default function AdminProducts() {
 
         if (response.error) {
           console.error("Error while updating product: ", response.error);
+          toast.error("Failed to update product");
           return;
         }
 
@@ -92,14 +94,17 @@ export default function AdminProducts() {
             p.id === editingProduct.id ? response.updatedProduct : p
           )
         );
+        toast.success("Product updated successfully");
       } else {
         const response = await createProduct(formData);
 
         if (response.error) {
           console.error("Validation Error:", response.error);
+          toast.error("Failed to create product");
           return;
         }
         setProducts((prev) => [response.product, ...prev]);
+        toast.success("Product created successfully");
       }
 
       handleCloseModal();
@@ -129,9 +134,11 @@ export default function AdminProducts() {
       await deleteProduct(id);
 
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Product deleted successfully");
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Error deleting product:", error);
+      toast.error("Failed to delete product");
     } finally {
       setIsLoading(false);
     }
@@ -471,7 +478,7 @@ export default function AdminProducts() {
                         className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary-foreground/80 flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer"
                       >
                         {isLoading && (
-                          <div className="animate-spin">
+                          <div className="animate-spin mr-1">
                             <i className="ri-loader-4-line text-lg"></i>
                           </div>
                         )}
