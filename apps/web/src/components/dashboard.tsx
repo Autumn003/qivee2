@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/alert-dialog";
+import { toast } from "sonner";
 
 interface ExtendedOrderItem extends OrderItem {
   name: string;
@@ -111,6 +112,9 @@ export default function Dashboard() {
   const [preview, setPreview] = useState<string | null>(null);
   const [shouldScrollToAddress, setShouldScrollToAddress] = useState(false);
 
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [saveAddressLoading, setSaveAddressLoading] = useState(false);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditAvatar(false);
@@ -129,7 +133,7 @@ export default function Dashboard() {
 
   const onUpdateNameSubmit = async (data: UserNameFormValues) => {
     if (!user.id) {
-      console.error("User ID is missing");
+      toast.error("User ID is missing");
       return;
     }
 
@@ -139,7 +143,7 @@ export default function Dashboard() {
       const response = await updateName(user.id, data.name);
 
       if (response?.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.toString);
         return;
       }
 
@@ -147,6 +151,8 @@ export default function Dashboard() {
         ...session,
         user: { ...session?.user, name: response.updatedUser.name },
       });
+
+      toast.success("Your name updated successfully");
 
       handleCloseModal();
     } catch (error) {
@@ -158,10 +164,9 @@ export default function Dashboard() {
 
   const onUpdatePasswordSubmit = async (data: UpdatePasswordFormValues) => {
     if (!user.id) {
-      console.error("User ID is missing");
+      toast.error("User ID is missing");
       return;
     }
-    console.log("update password submit callled");
 
     try {
       setIsLoading(true);
@@ -169,10 +174,10 @@ export default function Dashboard() {
       const response = await updatePassword(data.oldPassword, data.newPassword);
 
       if (response?.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.message);
         return;
       }
-
+      toast.success("Password updated successfully");
       handleClosePasswordModel();
     } catch (error) {
       console.error("Error updating name:", error);
@@ -183,12 +188,12 @@ export default function Dashboard() {
 
   const onUpdateAvatarSubmit = async (data: AvatarFormValues) => {
     if (!user.id) {
-      console.error("User ID is missing");
+      toast.error("User ID is missing");
       return;
     }
 
     if (!selectedImage) {
-      console.error("Select an image to upload");
+      toast.error("Select an image to upload");
       return;
     }
 
@@ -201,7 +206,7 @@ export default function Dashboard() {
       const response = await updateAvatar(user?.id || "", selectedImage);
 
       if (response?.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.message);
         return;
       }
 
@@ -211,7 +216,7 @@ export default function Dashboard() {
       await update({
         user: { ...session?.user, avatar: response.updatedUser.avatar },
       });
-
+      toast.success("Profile picture updated successfully");
       handleCloseModal();
     } catch (error) {
       console.error("Error updating avatar:", error);
@@ -320,7 +325,7 @@ export default function Dashboard() {
   });
 
   const handleSubmitAddress = async (data: AddressFormValues) => {
-    setIsLoading(true);
+    setSaveAddressLoading(true);
 
     const formData = new FormData();
     formData.append("name", data.name);
@@ -339,6 +344,7 @@ export default function Dashboard() {
 
       if (response.error) {
         console.error("Error while updating address: ", response.error);
+        toast.error("Failed to update address");
         return;
       }
 
@@ -349,10 +355,12 @@ export default function Dashboard() {
             : { ...addr, isDefault: false }
         )
       );
+      toast.success("Address updated successfully");
     } else {
       const response = await createAddress(formData);
       if (response.error) {
         console.error("Error while creating address: ", response.error);
+        toast.error("Failed to add address");
         return;
       }
       setAddresses((prev) =>
@@ -362,12 +370,13 @@ export default function Dashboard() {
               .concat(response.address)
           : [...prev, response.address]
       );
+      toast.success("Address added successfully");
     }
 
     setEditingAddress(null);
     addressForm.reset();
     setIsAddingAddress(false);
-    setIsLoading(false);
+    setSaveAddressLoading(false);
   };
 
   const handleEditAddress = async (address: Address) => {
@@ -377,9 +386,18 @@ export default function Dashboard() {
   };
 
   const handleDeleteAddress = async (id: string) => {
-    const response = await deleteAddress(id);
-    if (response.success) {
+    setDeleteLoading(true);
+    try {
+      const response = await deleteAddress(id);
+      if (response.error) {
+        toast.error(response.error.message);
+      }
       setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+      toast.success("Address deleted successfully");
+    } catch (error) {
+      console.error("Error while deleting address: ", error);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -730,7 +748,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
               <Link
                 href="/orders"
-                className="bg-card p-6 rounded-lg border border-muted-foreground hover:border-primary/50 transition-colors"
+                className="bg-late-background p-6 rounded-lg border border-muted-foreground hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <i className="ri-box-1-line text-4xl"></i>
@@ -744,7 +762,7 @@ export default function Dashboard() {
 
               <Link
                 href="/wishlist"
-                className="bg-card p-6 rounded-lg border border-muted-foreground hover:border-primary/50 transition-colors"
+                className="bg-late-background p-6 rounded-lg border border-muted-foreground hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <i className="ri-heart-line text-4xl"></i>
@@ -756,12 +774,13 @@ export default function Dashboard() {
                 </p>
               </Link>
 
-              <div className="bg-card p-6 rounded-lg border border-muted-foreground">
+              <div className="bg-late-background p-6 rounded-lg border border-muted-foreground">
                 <div className="flex items-center justify-between">
                   <i className="ri-map-pin-line text-4xl"></i>
                   <button
                     id="overviewAddAddressButton"
                     onClick={handleOverviewAddAddress}
+                    className="cursor-pointer"
                   >
                     <i className="ri-add-line text-xl text-secondary-foreground"></i>
                   </button>
@@ -814,7 +833,7 @@ export default function Dashboard() {
                             key={index}
                             src={item.image}
                             alt={item.name}
-                            className="h-12 w-12 rounded-md border-2 border-muted-background"
+                            className="h-12 w-12 rounded-md border-2 border-muted-background object-cover"
                           />
                         ))}
                       </div>
@@ -893,7 +912,7 @@ export default function Dashboard() {
             {/* Addresses */}
             <div
               ref={addressSectionRef}
-              className="bg-card rounded-lg border border-muted-foreground p-6"
+              className="rounded-lg border border-muted-foreground p-6 "
             >
               <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
                 <div className="flex items-center text-xl">
@@ -1044,14 +1063,26 @@ export default function Dashboard() {
                       type="submit"
                       className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
                     >
-                      Save Address
+                      {saveAddressLoading ? (
+                        <div className="flex gap-2 items-center justify-center">
+                          <div className="animate-spin">
+                            <i className="ri-loader-4-line "></i>
+                          </div>
+                          Save Address
+                        </div>
+                      ) : (
+                        <>Save Address</>
+                      )}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 overflow-auto h-[32rem] no-scrollbar">
                   {addresses.map((address) => (
-                    <div key={address.id} className={`p-4 rounded-lg border`}>
+                    <div
+                      key={address.id}
+                      className={`p-4 rounded-lg border border-secondary-foreground`}
+                    >
                       <div>
                         <div className="flex items-center">
                           <p className="font-medium">{address.name}</p>
@@ -1084,7 +1115,7 @@ export default function Dashboard() {
                                 className="p-2 hover:bg-destructive/10 rounded-md cursor-pointer text-destructive"
                                 disabled={isLoading}
                               >
-                                {isLoading ? (
+                                {deleteLoading ? (
                                   <div className="animate-spin">
                                     <i className="ri-loader-4-line text-xl"></i>
                                   </div>
