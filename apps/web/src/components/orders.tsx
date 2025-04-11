@@ -7,6 +7,18 @@ import { OrderStatus, Order, OrderItem } from "@prisma/client";
 
 import { getOrdersByUserId, cancelOrder } from "../../actions/order.action";
 import { useSession } from "next-auth/react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/alert-dialog";
+import { toast } from "sonner";
 
 interface ExtendedOrderItem extends OrderItem {
   name: string;
@@ -34,28 +46,38 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [orderToCancel, setOrderToCancel] = useState<OrderWithItems | null>(
+    null
+  );
 
-  const cancelOrderHandler = async (orderId: string) => {
+  const cancelOrderHandler = async () => {
+    if (!orderToCancel) return;
     if (!userId) {
       return alert("You must be logged in to cancel an order");
     }
 
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this order?"
-    );
-    if (!confirmCancel) return;
+    const orderId = orderToCancel.id;
+    setIsLoading((prev) => ({ ...prev, [orderId]: true }));
 
-    const response = await cancelOrder(orderId, userId);
-    if (response.success) {
-      setOrders((prevOrder) =>
-        prevOrder.map((order) =>
-          order.id === orderId
-            ? { ...order, status: OrderStatus.CANCELLED }
-            : order
-        )
-      );
-    } else {
-      alert(response.error || "Failed to cancel the order.");
+    try {
+      const response = await cancelOrder(orderId, userId);
+      if (response.success) {
+        toast.success("Order cancelled successfully");
+        setOrders((prevOrder) =>
+          prevOrder.map((order) =>
+            order.id === orderId
+              ? { ...order, status: OrderStatus.CANCELLED }
+              : order
+          )
+        );
+      } else {
+        toast.error(response.error || "Failed to cancel the order.");
+      }
+    } catch (error) {
+      console.error("Error deleting cart item:", error);
+    } finally {
+      setIsLoading((prev) => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -142,7 +164,7 @@ export default function Orders() {
                 placeholder="Search orders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-primary-foreground/20"
               />
               <i className="ri-search-line absolute left-3 top-2 text-lg text-secondary-foreground"></i>
             </div>
@@ -152,7 +174,7 @@ export default function Orders() {
               onChange={(e) =>
                 setStatusFilter(e.target.value as OrderStatus | "all")
               }
-              className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-primary-background"
+              className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-primary-foreground/20 bg-primary-background"
             >
               <option value="all">All Orders</option>
               <option value={OrderStatus.PROCESSING}>Processing</option>
@@ -197,7 +219,7 @@ export default function Orders() {
                   </div>
                   <div className="mt-4 sm:mt-0 flex items-center justify-between md:justify-normal space-x-4">
                     <div
-                      className={`px-3 py-1 rounded-full flex items-center space-x-1.5 ${getStatusColor(order.status)}`}
+                      className={`px-3 py-1 text-sm rounded-full flex items-center space-x-1.5 ${getStatusColor(order.status)}`}
                     >
                       {getStatusIcon(order.status)}
                       <span className="capitalize">{order.status}</span>
@@ -306,16 +328,52 @@ export default function Orders() {
 
                   {/* Action Buttons */}
                   <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
-                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90">
+                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer">
                       Contact Support
                     </button>
                     {order.status === OrderStatus.PROCESSING && (
-                      <button
-                        onClick={() => cancelOrderHandler(order.id)}
-                        className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary"
-                      >
-                        Cancel Order
-                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            onClick={() => setOrderToCancel(order)}
+                            className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer"
+                          >
+                            {isLoading[order.id] ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="animate-spin text-center">
+                                  <i className="ri-loader-4-line text-xl"></i>
+                                </div>
+                                Cancel Order
+                              </div>
+                            ) : (
+                              <>Cancel Order</>
+                            )}
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancel order?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to cancel order with Order
+                              ID: <strong>{order.id}</strong>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
+                              onClick={() => setOrderToCancel(null)}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                              onClick={cancelOrderHandler}
+                            >
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 </div>
