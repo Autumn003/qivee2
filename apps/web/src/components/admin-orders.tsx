@@ -128,7 +128,7 @@ export default function AdminOrders() {
     newStatus: OrderStatus
   ) => {
     if (!user || user.role !== UserRole.ADMIN) {
-      alert("Unauthorized action");
+      toast.error("Unauthorized action");
       return;
     }
     setIsLoading(true);
@@ -150,7 +150,7 @@ export default function AdminOrders() {
 
   const handleDeleteOrder = async () => {
     if (!user || user.role !== UserRole.ADMIN) {
-      alert("Unauthorized action");
+      toast.error("Unauthorized action");
       return;
     }
     const orderId = orderToDelete?.id || "";
