@@ -8,6 +8,7 @@ import { Product } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { addToCart } from "actions/cart.action";
 import { addToWishlist } from "actions/wishlist.action";
+import { toast } from "sonner";
 
 export default function ProductDetails() {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -16,6 +17,7 @@ export default function ProductDetails() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const { id: productId } = useParams() as { id: string };
 
@@ -29,10 +31,10 @@ export default function ProductDetails() {
       setLoading(true);
       const response = await addToCart(productId, 1);
       if (response.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.message);
         return;
       }
-      alert("product added to cart");
+      toast.success("Product added to cart");
     } catch (error) {
       console.error("Error deleting product:", error);
     } finally {
@@ -42,18 +44,17 @@ export default function ProductDetails() {
 
   const addToWishlistHandler = async () => {
     try {
-      setLoading(true);
+      setWishlistLoading(true);
       const response = await addToWishlist(productId);
       if (response.error) {
-        console.error("Validation Error:", response.error.message);
-        alert(response.error.message);
+        toast.error(response.error.message);
         return;
       }
-      alert("Product added to wishlist");
+      toast.success("Product added to wishlist");
     } catch (error) {
       console.error("Error while adding product to wishlist:", error);
     } finally {
-      setLoading(false);
+      setWishlistLoading(false);
     }
   };
 
@@ -227,7 +228,13 @@ export default function ProductDetails() {
                   onClick={addToWishlistHandler}
                   className="py-3 px-4 cursor-pointer rounded-lg bg-secondary-background text-primary-background "
                 >
-                  <i className="ri-heart-line text-2xl"></i>
+                  {wishlistLoading ? (
+                    <div className="animate-spin">
+                      <i className="ri-loader-4-line text-2xl"></i>
+                    </div>
+                  ) : (
+                    <i className="ri-heart-line text-2xl"></i>
+                  )}
                 </button>
                 <button
                   onClick={shareHandler}
