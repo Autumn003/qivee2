@@ -14,6 +14,7 @@ import { createOrder } from "actions/order.action";
 import { PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { toast } from "sonner";
 
 interface CartItemWithDetails {
   id: string;
@@ -109,6 +110,7 @@ export default function Checkout() {
     const response = await createAddress(formData);
     if (response.error) {
       console.error("Error while creating address: ", response.error);
+      toast.error("Failed to add address");
       return;
     }
     setSavedAddresses((prev) =>
@@ -119,6 +121,8 @@ export default function Checkout() {
         : [...prev, response.address]
     );
 
+    toast.success("Address added successfully");
+
     addressForm.reset();
     setIsAddingAddress(false);
     setIsLoading(false);
@@ -126,7 +130,7 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
-      alert("Please select a shipping address.");
+      toast.info("Please select a shipping address.");
       return;
     }
 
@@ -147,11 +151,11 @@ export default function Checkout() {
       setIsLoading(false);
 
       if (response.success) {
-        alert("Order placed successfully!");
+        toast.success("Order placed successfully");
         await clearCart();
         router.push(`/order-success?orderId=${response.order.id}`);
       } else {
-        alert("Error placing order: " + response.error);
+        toast.error("Error placing order: " + response.error);
       }
     } else {
       // Handle PhonePe Payment
@@ -182,6 +186,7 @@ export default function Checkout() {
 
           // Clear cart before redirecting
           await clearCart();
+          toast.success("Order placed successfully");
 
           // Redirect to PhonePe
           window.location.href = data.redirectUrl;
@@ -199,11 +204,6 @@ export default function Checkout() {
         setIsLoading(false);
       }
     }
-    // else {
-    //   // Handle other payment methods
-    //   alert("This payment method is not yet implemented.");
-    //   setIsLoading(false);
-    // }
   };
 
   return (
@@ -429,83 +429,29 @@ export default function Checkout() {
 
               <div className="space-y-4">
                 <div
-                  className={`p-4 rounded-lg border ${
-                    paymentMethod === PaymentMethod.CARD
-                      ? "border-primary-foreground bg-primary-background/5"
-                      : "border-muted-foreground"
-                  }`}
-                >
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === PaymentMethod.CARD}
-                      onChange={() => setPaymentMethod(PaymentMethod.CARD)}
-                      className="mr-3"
-                    />
-                    <div className="flex items-center">
-                      <i className="ri-bank-card-line mr-2 text-xl"></i>
-                      <span>Credit/Debit Card</span>
-                    </div>
-                  </label>
-                  {paymentMethod === PaymentMethod.CARD && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium mb-1">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-muted-foreground rounded-md"
-                          placeholder="1234 5678 9012 3456"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Expiry Date
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-muted-foreground rounded-md"
-                          placeholder="MM/YY"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          CVV
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-muted-foreground rounded-md"
-                          placeholder="123"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div
-                  className={`p-4 rounded-lg border ${
+                  className={`p-4 rounded-lg border cursor-not-allowed ${
                     paymentMethod === PaymentMethod.UPI
                       ? "border-primary-foreground bg-primary-background/5"
                       : "border-muted-foreground"
                   }`}
                 >
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-not-allowed">
                     <input
                       type="radio"
                       name="payment"
                       checked={paymentMethod === PaymentMethod.UPI}
                       onChange={() => setPaymentMethod(PaymentMethod.UPI)}
-                      className="mr-3"
+                      className="mr-3 cursor-not-allowed"
+                      disabled
                     />
                     <div className="flex items-center">
-                      <img
-                        src="/media/upi-icon.svg"
-                        alt="UPI"
-                        className="h-6 mr-2"
-                      />
-                      <span>UPI</span>
+                      <i className="ri-secure-payment-line text-xl mr-2"></i>
+                      <p>
+                        Online Gateway{" "}
+                        <span className="text-secondary-foreground">
+                          (Currently unavailable)
+                        </span>
+                      </p>
                     </div>
                   </label>
                 </div>
