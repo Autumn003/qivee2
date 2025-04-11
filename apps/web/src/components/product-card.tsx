@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Product, productCategory } from "@prisma/client";
 import { addToCart } from "actions/cart.action";
+import { toast } from "sonner";
 
 interface ProductCardProps extends Product {
   className?: string;
@@ -33,10 +34,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       setLoading(true);
       const response = await addToCart(id, 1);
       if (response.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.message);
         return;
       }
-      alert("product added to cart");
+      toast.success("Product added to cart");
     } catch (error) {
       console.error("Error deleting product:", error);
     } finally {
