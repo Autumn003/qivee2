@@ -23,6 +23,17 @@ import {
 import { addressSchema } from "schemas/address-schema";
 import { getOrdersByUserId } from "actions/order.action";
 import { getWishlist } from "actions/wishlist.action";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/alert-dialog";
 
 interface ExtendedOrderItem extends OrderItem {
   name: string;
@@ -444,12 +455,33 @@ export default function Dashboard() {
             >
               Edit Profile
             </button>
-            <button
-              onClick={() => signOut()}
-              className="px-4 py-2 text-destructive border-2 border-destructive rounded-lg font-medium hover:bg-destructive hover:text-white cursor-pointer"
-            >
-              Sign Out
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="px-4 py-2 text-destructive border-2 border-destructive rounded-lg font-medium hover:bg-destructive hover:text-white cursor-pointer">
+                  Sign Out
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Sign out of your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Click <strong>Continue</strong> to sign out of your account
+                    on this device. You can always sign back in later.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                    onClick={() => signOut()}
+                  >
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 

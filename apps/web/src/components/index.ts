@@ -16,6 +16,7 @@ import ForgetPassword from "./forget-password";
 import ResetPassword from "./reset-password";
 import NewArrivals from "./new-arrivals";
 import Featured from "./featured";
+import { DynamicToaster } from "./dynamic-toaster";
 
 export {
   Header,
@@ -36,4 +37,5 @@ export {
   ResetPassword,
   NewArrivals,
   Featured,
+  DynamicToaster,
 };

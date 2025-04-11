@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getWishlist, removeFromWishlist } from "actions/wishlist.action";
 import { addToCart } from "actions/cart.action";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/alert-dialog";
+import { toast } from "sonner";
 
 interface WishlistItemWithDetails {
   id: string;
@@ -21,6 +33,11 @@ export default function Wishlist() {
   const [showInStockOnly, setShowInStockOnly] = useState(false);
 
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [isAddCartLoading, setIsAddCartLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [itemToRemove, setItemToRemove] =
+    useState<WishlistItemWithDetails | null>(null);
 
   const filteredWishlist = wishlist.filter((item) => {
     const matchesSearch = item.name
@@ -30,14 +47,16 @@ export default function Wishlist() {
     return matchesSearch && matchesStock;
   });
 
-  const removeItem = async (id: string) => {
-    if (!window.confirm("Remove item from wishlist?")) return;
+  const removeItem = async () => {
+    if (!itemToRemove) return;
+    const id = itemToRemove.productId;
     setIsLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
       const response = await removeFromWishlist(id);
       if (response.success) {
         setWishlist((items) => items.filter((item) => item.productId !== id));
+        setItemToRemove(null);
       }
     } catch (error) {
       console.error("Error deleting cart item:", error);
@@ -48,17 +67,17 @@ export default function Wishlist() {
 
   const addToCartHandler = async (productId: string) => {
     try {
-      setIsLoading((prev) => ({ ...prev, [productId]: true }));
+      setIsAddCartLoading((prev) => ({ ...prev, [productId]: true }));
       const response = await addToCart(productId, 1);
       if (response.error) {
-        console.error("Validation Error:", response.error);
+        toast.error(response.error.message);
         return;
       }
-      alert("product added to cart");
+      toast.success("Product added to cart");
     } catch (error) {
       console.error("Error deleting product:", error);
     } finally {
-      setIsLoading((prev) => ({ ...prev, [productId]: false }));
+      setIsAddCartLoading((prev) => ({ ...prev, [productId]: false }));
     }
   };
 
@@ -154,27 +173,62 @@ export default function Wishlist() {
                           year: "numeric",
                         })}
                       </p>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center self-end space-x-4">
                         <button
                           onClick={() => addToCartHandler(item.productId)}
                           className="p-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
                           title="Add to Cart"
                         >
-                          <i className="ri-shopping-cart-line text-xl"></i>
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          className="p-2 text-secondary-foreground hover:text-destructive transition-colors duration-150 cursor-pointer"
-                          title="Remove from Wishlist"
-                        >
-                          {isLoading[item.productId] ? (
+                          {isAddCartLoading[item.productId] ? (
                             <div className="animate-spin">
-                              <i className="ri-loader-4-line text-xl text-destructive"></i>
+                              <i className="ri-loader-4-line text-xl"></i>
                             </div>
                           ) : (
-                            <i className="ri-delete-bin-6-line text-xl"></i>
+                            <i className="ri-shopping-cart-line text-xl"></i>
                           )}
                         </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              onClick={() => setItemToRemove(item)}
+                              className="p-2 text-secondary-foreground hover:text-destructive transition-colors duration-150 cursor-pointer"
+                              title="Remove from Wishlist"
+                            >
+                              {isLoading[item.productId] ? (
+                                <div className="animate-spin">
+                                  <i className="ri-loader-4-line text-xl text-destructive"></i>
+                                </div>
+                              ) : (
+                                <i className="ri-delete-bin-6-line text-xl"></i>
+                              )}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remove from wishlist?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove{" "}
+                                <strong>{item.name}</strong> from your wishlist?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
+                                onClick={() => setItemToRemove(null)}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                                onClick={removeItem}
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </div>
