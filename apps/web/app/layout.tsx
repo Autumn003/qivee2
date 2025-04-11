@@ -5,6 +5,7 @@ import { Header } from "../src/components/header";
 import Footer from "@/components/footer";
 
 import { Providers } from "./providers";
+import { DynamicToaster } from "@/components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,11 +21,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang="en" className="dark ">
+    <html suppressHydrationWarning lang="en" className="dark">
       <Providers>
         <body
           className={`${inter.className} text-primary-foreground custom-scrollbar`}
         >
+          <DynamicToaster />
           <div className="fixed inset-0 -z-50" />
           <Header />
           <div className="mt-16 ">{children}</div>
