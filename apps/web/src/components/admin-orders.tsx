@@ -9,6 +9,18 @@ import {
 } from "actions/order.action";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/alert-dialog";
+import { toast } from "sonner";
 
 interface ExtendedOrderItem extends OrderItem {
   name: string;
@@ -40,6 +52,12 @@ export default function AdminOrders() {
   );
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<OrderWithItems | null>(
+    null
+  );
+  const [deleteLoading, setDeleteLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   useEffect(() => {
     async function fetchOrders() {
@@ -116,30 +134,28 @@ export default function AdminOrders() {
     setIsLoading(true);
     const response = await updateOrderStatus(orderId, newStatus, user.role);
     if (response.success) {
+      toast.success("Order status updated successfully");
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order
         )
       );
+
       setEditingOrder(null);
     } else {
-      alert("Failed to update status: " + response.error);
+      toast.error("Failed to update status: " + response.error);
     }
     setIsLoading(false);
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
+  const handleDeleteOrder = async () => {
     if (!user || user.role !== UserRole.ADMIN) {
       alert("Unauthorized action");
       return;
     }
+    const orderId = orderToDelete?.id || "";
 
-    setIsLoading(true);
-
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this order?"
-    );
-    if (!confirmCancel) return;
+    setDeleteLoading((prev) => ({ ...prev, [orderId]: true }));
 
     try {
       const response = await deleteOrder(orderId, user.role);
@@ -149,15 +165,15 @@ export default function AdminOrders() {
           prevOrders.filter((order) => order.id !== orderId)
         );
         setEditingOrder(null);
-        alert("Order deleted successfully!");
+        toast.success("Order deleted successfully!");
       } else {
-        alert("Failed to delete order: " + response.error);
+        toast.error("Failed to delete order: " + response.error);
       }
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert("An error occurred while deleting the order.");
+      toast.error("An error occurred while deleting the order.");
     } finally {
-      setIsLoading(false);
+      setDeleteLoading((prev) => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -389,16 +405,51 @@ export default function AdminOrders() {
                         <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
                           <button
                             onClick={() => setEditingOrder(order)}
-                            className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90"
+                            className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer"
                           >
                             Edit Order
                           </button>
-                          <button
-                            onClick={() => handleDeleteOrder(order.id)}
-                            className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary"
-                          >
-                            Delete Order
-                          </button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                onClick={() => setOrderToDelete(order)}
+                                className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer"
+                              >
+                                {deleteLoading[order.id] ? (
+                                  <div className="flex justify-center items-center gap-2">
+                                    <div className="animate-spin">
+                                      <i className="ri-loader-4-line text-xl"></i>
+                                    </div>
+                                    Delete Order
+                                  </div>
+                                ) : (
+                                  <>Delete Order</>
+                                )}
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Remove from wishlist?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete order with
+                                  order ID: <strong>{order.id}</strong>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150">
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                                  onClick={handleDeleteOrder}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
                     </div>
