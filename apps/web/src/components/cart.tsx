@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getCart, removeFromCart, updateQuantity } from "actions/cart.action";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/alert-dialog";
 import { CartItem } from "@prisma/client";
+import { toast } from "sonner";
 
 interface CartItemWithDetails {
   id: string;
@@ -17,14 +29,23 @@ interface CartItemWithDetails {
 export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItemWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [isQuantityLoading, setIsQuantityLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [itemToRemove, setItemToRemove] = useState<CartItemWithDetails | null>(
+    null
+  );
 
   const updateQuantityHandler = async (
     cartItemId: string,
     productId: string,
     newQuantity: number
   ) => {
-    if (newQuantity < 1) return;
-    setIsLoading((prev) => ({ ...prev, [cartItemId]: true }));
+    if (newQuantity < 1) {
+      toast.info("Quantity must be atleast 1");
+      return;
+    }
+    setIsQuantityLoading((prev) => ({ ...prev, [cartItemId]: true }));
     try {
       const response = await updateQuantity(productId, newQuantity);
 
@@ -40,23 +61,28 @@ export default function Cart() {
     } catch (error) {
       console.error("Error updating cart item:", error);
     } finally {
-      setIsLoading((prev) => ({ ...prev, [cartItemId]: false }));
+      setIsQuantityLoading((prev) => ({ ...prev, [cartItemId]: false }));
     }
   };
 
-  const removeItem = async (id: string) => {
-    if (!window.confirm("Delete item from cart?")) return;
+  const removeItem = async () => {
+    if (!itemToRemove) return;
+    const { productId, id } = itemToRemove;
     setIsLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const response = await removeFromCart(id);
+      const response = await removeFromCart(productId);
       if (response.success) {
-        setCartItems((items) => items.filter((item) => item.productId !== id));
+        setCartItems((items) =>
+          items.filter((item) => item.productId !== productId)
+        );
+        setItemToRemove(null);
       }
     } catch (error) {
       console.error("Error deleting cart item:", error);
     } finally {
       setIsLoading((prev) => ({ ...prev, [id]: false }));
+      setItemToRemove(null);
     }
   };
 
@@ -113,58 +139,94 @@ export default function Cart() {
                         className="h-full w-full object-cover object-center"
                       />
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-medium text-primary-foreground">
-                        {item.name}
-                      </h3>
-                      <p className="mt-1 text-sm font-medium text-primary-foreground">
-                        ${item.price.toFixed(2)}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center border border-muted-foreground rounded-md">
-                        <button
-                          onClick={() =>
-                            updateQuantityHandler(
-                              item.id,
-                              item.productId,
-                              item.quantity - 1
-                            )
-                          }
-                          className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
-                        >
-                          <i className="ri-subtract-line"></i>
-                        </button>
-                        <span className="px-4 py-2 text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantityHandler(
-                              item.id,
-                              item.productId,
-                              item.quantity + 1
-                            )
-                          }
-                          className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
-                        >
-                          <i className="ri-add-line w-4"></i>
-                        </button>
+                    <div className="flex flex-col md:flex-row items-start gap-4 justify-between w-full">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-medium text-primary-foreground">
+                          {item.name}
+                        </h3>
+                        <p className="mt-1 text-sm font-medium text-primary-foreground">
+                          ${item.price.toFixed(2)}
+                        </p>
                       </div>
-                      <button
-                        onClick={() => removeItem(item.productId)}
-                        className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-destructive"
-                      >
-                        {isLoading[item.id] ? (
-                          <div className="animate-spin">
-                            <i className="ri-loader-4-line text-xl"></i>
-                          </div>
-                        ) : (
-                          <i className="ri-delete-bin-6-line text-xl"></i>
-                        )}
-                      </button>
+
+                      <div className="flex items-center justify-between w-full md:justify-normal md:w-fit space-x-4">
+                        <div className="flex items-center border border-muted-foreground rounded-md">
+                          <button
+                            onClick={() =>
+                              updateQuantityHandler(
+                                item.id,
+                                item.productId,
+                                item.quantity - 1
+                              )
+                            }
+                            className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
+                          >
+                            <i className="ri-subtract-line"></i>
+                          </button>
+                          <span className=" w-6 text-center text-sm font-medium">
+                            {isQuantityLoading[item.id] ? (
+                              <div className="animate-spin">
+                                <i className="ri-loader-4-line"></i>
+                              </div>
+                            ) : (
+                              item.quantity
+                            )}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateQuantityHandler(
+                                item.id,
+                                item.productId,
+                                item.quantity + 1
+                              )
+                            }
+                            className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-primary-foreground"
+                          >
+                            <i className="ri-add-line w-4"></i>
+                          </button>
+                        </div>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              onClick={() => setItemToRemove(item)}
+                              className="p-2 text-secondary-foreground transition-colors cursor-pointer hover:text-destructive"
+                            >
+                              {isLoading[item.id] ? (
+                                <div className="animate-spin text-center">
+                                  <i className="ri-loader-4-line text-xl text-destructive"></i>
+                                </div>
+                              ) : (
+                                <i className="ri-delete-bin-6-line text-xl"></i>
+                              )}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remove from cart?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove{" "}
+                                <strong>{item.name}</strong> from your cart?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
+                                onClick={() => setItemToRemove(null)}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                                onClick={removeItem}
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </div>
                 ))}
