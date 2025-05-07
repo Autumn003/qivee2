@@ -57,7 +57,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <img
             src={images[0]}
             alt={name}
-            // className="w-full h-48 object-cover"
             className="w-full h-full aspect-square object-cover"
           />
           <div className="flex absolute top-4 right-0">
@@ -89,7 +88,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </Link>
         <div className="p-4">
-          <div className="h-36">
+          <div className="h-24">
             <Link href={`/products/${id}`}>
               <h3 className="text-lg font-semibold">{name}</h3>
               <p className="text-gray-600 text-sm mt-2 line-clamp-2">

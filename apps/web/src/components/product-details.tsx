@@ -249,26 +249,46 @@ export default function ProductDetails() {
       </div>
 
       {/* RECOMMENDED PRODUCTS */}
-      <section className="container mx-auto my-20">
-        <h2 className="text-2xl font-bold mb-8 text-center">
-          Recommended Products
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {recommendedProducts.map((product) => (
-            <Link
-              href={`/products/${product.id}`}
-              key={product.id}
-              className="group"
-            >
-              <FeaturedCard
-                title={product.name}
-                imageURL={product.images[0] || ""}
-                price={product.price}
-              />
-            </Link>
-          ))}
+      {product ? (
+        <section className="container mx-auto my-20">
+          <h2 className="text-2xl font-bold mb-8 text-center">
+            Recommended Products
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {recommendedProducts.map((product) => (
+              <Link
+                href={`/products/${product.id}`}
+                key={product.id}
+                className="group"
+              >
+                <FeaturedCard
+                  title={product.name}
+                  imageURL={product.images[0] || ""}
+                  price={product.price}
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="text-center py-12 container">
+          <i className="ri-error-warning-line text-6xl text-muted-foreground mx-auto"></i>
+          <h2 className="mt-4 text-lg font-medium text-primary-foreground">
+            Product not found
+          </h2>
+          <p className="mt-2 text-secondary-foreground ">
+            We couldn’t find the product you’re looking for. It may have been
+            removed or is currently unavailable.
+          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center mt-6 bg-secondary-background text-primary-background hover:bg-secondary-background/80 px-6 py-3 rounded-lg font-medium"
+          >
+            Start Shopping
+            <i className="ri-arrow-right-line ml-2 "></i>
+          </Link>
         </div>
-      </section>
+      )}
     </div>
   );
 }
