@@ -191,7 +191,7 @@ export default function NewArrivals() {
           )}
         </div>
         <div className={`my-16 ${featuredProducts.length < 1 ? "hidden" : ""}`}>
-          <FeaturedProducts />
+          <FeaturedProducts variant="featured" count={4} />
         </div>
       </div>
     </div>

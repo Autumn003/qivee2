@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getAllProducts } from "actions/product.action";
 import { Product } from "@prisma/client";
 import { addToWishlist } from "actions/wishlist.action";
+import FeaturedProducts from "./featured-products";
 
 export default function Featured() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -188,7 +189,7 @@ export default function Featured() {
         </div>
 
         <div className={`my-16 ${newArrivals.length < 1 ? "hidden" : ""}`}>
-          <div className="flex justify-between mb-6 items-end">
+          {/* <div className="flex justify-between mb-6 items-end">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
                 New Arrivals
@@ -254,7 +255,8 @@ export default function Featured() {
                 </Link>
               </div>
             ))}
-          </div>
+          </div> */}
+          <FeaturedProducts variant="newest" count={4} />
         </div>
       </div>
     </div>

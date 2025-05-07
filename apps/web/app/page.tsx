@@ -143,7 +143,7 @@ export default function Home() {
 
       {/* FEATURED PRODUCTS */}
       <section className="container mx-auto mb-20">
-        <FeaturedProducts />
+        <FeaturedProducts variant="featured" count={4} />
       </section>
 
       {/* Features Section */}
@@ -164,6 +164,11 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* NEW ARRIVALS */}
+      <section className="container mx-auto mb-20">
+        <FeaturedProducts variant="newest" count={4} />
       </section>
 
       {/* why choose us */}

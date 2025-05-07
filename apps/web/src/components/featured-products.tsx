@@ -6,7 +6,12 @@ import { getAllProducts } from "actions/product.action";
 import { Product } from "@prisma/client";
 import { FeaturedCard } from "@/components";
 
-export default function FeaturedProducts() {
+interface Props {
+  count: number;
+  variant: "newest" | "featured";
+}
+
+export default function FeaturedProducts({ count, variant }: Props) {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -14,11 +19,16 @@ export default function FeaturedProducts() {
       try {
         const response = await getAllProducts();
         if (response.success) {
-          const featuredProducts = response.products
-            .filter((product: Product) => product.isFeatured)
-            .slice(0, 4);
+          if (variant === "featured") {
+            const featuredProducts = response.products
+              .filter((product: Product) => product.isFeatured)
+              .slice(0, count);
 
-          setFeaturedProducts(featuredProducts);
+            setFeaturedProducts(featuredProducts);
+          } else if (variant === "newest") {
+            const featuredProducts = response.products.slice(0, count);
+            setFeaturedProducts(featuredProducts);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch products", error);
@@ -33,16 +43,22 @@ export default function FeaturedProducts() {
         <div className="w-full hidden lg:block"></div>
         <div className="w-full lg:text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Featured Products
+            {(variant === "newest" && "New Arrivals") ||
+              (variant === "featured" && "Featured products")}
           </h1>
         </div>
-        <Link
-          href="/featured"
-          className="flex gap-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 w-full sm:justify-end"
-        >
-          <p className="text-sm">Featured products</p>
-          <i className="ri-arrow-right-up-line"></i>
-        </Link>
+        <div className="w-full flex justify-end">
+          <Link
+            href="/featured"
+            className="flex gap-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150 w-fit justify-end"
+          >
+            <p className="text-sm">
+              {(variant === "newest" && "New Arrivals") ||
+                (variant === "featured" && "Featured products")}
+            </p>
+            <i className="ri-arrow-right-up-line"></i>
+          </Link>
+        </div>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {featuredProducts.map((product) => (
