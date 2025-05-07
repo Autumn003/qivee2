@@ -13,7 +13,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { updateAvatar, updateName, updatePassword } from "actions/user.action";
-import { Address, Order, OrderItem, OrderStatus } from "@prisma/client";
+import {
+  Address,
+  Order,
+  OrderItem,
+  OrderStatus,
+  UserRole,
+} from "@prisma/client";
 import {
   createAddress,
   deleteAddress,
@@ -505,27 +511,38 @@ export default function Dashboard() {
 
         {/* Navigation Tabs */}
         <div className="border-b border-muted-foreground mb-8">
-          <div className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`py-4 text-sm font-medium border-b-2 cursor-pointer transition-all duration-200 ${
-                activeTab === "overview"
-                  ? "border-primary-foreground text-primary-foreground"
-                  : "border-transparent text-secondary-foreground hover:text-primary-foreground"
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={`py-4 text-sm font-medium border-b-2 cursor-pointer transition-all duration-200 ${
-                activeTab === "profile"
-                  ? "border-primary-foreground text-primary-foreground"
-                  : "border-transparent text-secondary-foreground hover:text-primary-foreground"
-              }`}
-            >
-              Profile
-            </button>
+          <div className="flex justify-between">
+            <div className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`py-4 text-sm font-medium border-b-2 cursor-pointer transition-all duration-200 ${
+                  activeTab === "overview"
+                    ? "border-primary-foreground text-primary-foreground"
+                    : "border-transparent text-secondary-foreground hover:text-primary-foreground"
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`py-4 text-sm font-medium border-b-2 cursor-pointer transition-all duration-200 ${
+                  activeTab === "profile"
+                    ? "border-primary-foreground text-primary-foreground"
+                    : "border-transparent text-secondary-foreground hover:text-primary-foreground"
+                }`}
+              >
+                Profile
+              </button>
+            </div>
+
+            {user.role === UserRole.ADMIN && (
+              <Link
+                href="/admin"
+                className="px-4 py-3 mb-2 text-sm font-medium bg-muted-background cursor-pointer transition-all duration-200 animate-bounce rounded-lg"
+              >
+                Admin
+              </Link>
+            )}
           </div>
         </div>
 
