@@ -175,7 +175,7 @@ export default function ProductDetails() {
             {/* Product Info */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight text-primary-foreground">
+                <h1 className="text-3xl font-bold tracking-tight text-secondary-foreground">
                   {product.name}
                 </h1>
                 <div className="flex items-center space-x-4 space-y-2">

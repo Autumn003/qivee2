@@ -844,7 +844,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
-                          ${order.totalPrice.toFixed(2)}
+                          ₹{order.totalPrice.toFixed(2)}
                         </p>
                       </div>
                     </div>

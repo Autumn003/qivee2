@@ -298,12 +298,12 @@ export default function Orders() {
                               {item.color} • Size {item.size}
                             </p> */}
                           <p className="text-sm text-secondary-foreground">
-                            Qty: {item.quantity} × ${item.price}
+                            Qty: {item.quantity} × ₹{item.price}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-medium">
-                            ${item.quantity * item.price}
+                            ₹{item.quantity * item.price}
                           </p>
                         </div>
                       </div>
@@ -319,7 +319,7 @@ export default function Orders() {
                             Total
                           </span>
                           <span className="font-semibold text-xl">
-                            ${order.totalPrice}
+                            ₹{order.totalPrice}
                           </span>
                         </div>
                       </div>
