@@ -53,21 +53,31 @@ const ProductCard: React.FC<ProductCardProps> = ({
       )}
     >
       <div>
-        <Link href={`/products/${id}`}>
+        <Link href={`/products/${id}`} className="relative">
           <img
             src={images[0]}
             alt={name}
             // className="w-full h-48 object-cover"
             className="w-full h-full aspect-square object-cover"
           />
-        </Link>
-        <div className="p-4">
-          <div className="h-36">
-            <span
+          <div className="flex absolute top-4 right-0">
+            <div
               className={cn(
-                "text-xs px-2 py-1 rounded-full",
+                "border-t-12 border-b-12 border-l-12 border-r-12",
                 category === productCategory.women_bagpacks &&
-                  "text-emerald-500 bg-emerald-300/30",
+                  "border-emerald-300/30",
+                category === productCategory.baby_products &&
+                  "border-cyan-300/30",
+                category === productCategory.mobile_accessories &&
+                  "border-amber-300/30",
+                "border-l-transparent"
+              )}
+            ></div>
+            <div
+              className={cn(
+                "text-xs px-2 py-1 flex items-center",
+                category === productCategory.women_bagpacks &&
+                  "text-emerald-700 bg-emerald-300/30",
                 category === productCategory.baby_products &&
                   "text-cyan-500 bg-cyan-300/30",
                 category === productCategory.mobile_accessories &&
@@ -75,9 +85,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
               )}
             >
               {formatCategory(category)}
-            </span>
+            </div>
+          </div>
+        </Link>
+        <div className="p-4">
+          <div className="h-36">
             <Link href={`/products/${id}`}>
-              <h3 className="text-lg font-semibold mt-3">{name}</h3>
+              <h3 className="text-lg font-semibold">{name}</h3>
               <p className="text-gray-600 text-sm mt-2 line-clamp-2">
                 {description}
               </p>
