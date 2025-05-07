@@ -17,6 +17,7 @@ import ResetPassword from "./reset-password";
 import NewArrivals from "./new-arrivals";
 import Featured from "./featured";
 import { DynamicToaster } from "./dynamic-toaster";
+import FeaturedProducts from "./featured-products";
 
 export {
   Header,
@@ -38,4 +39,5 @@ export {
   NewArrivals,
   Featured,
   DynamicToaster,
+  FeaturedProducts,
 };

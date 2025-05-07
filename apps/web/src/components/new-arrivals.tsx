@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getAllProducts } from "actions/product.action";
 import { Product } from "@prisma/client";
 import { addToWishlist } from "actions/wishlist.action";
-import FeaturedCard from "./featured-card";
+import FeaturedProducts from "./featured-products";
 
 export default function NewArrivals() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -191,31 +191,7 @@ export default function NewArrivals() {
           )}
         </div>
         <div className={`my-16 ${featuredProducts.length < 1 ? "hidden" : ""}`}>
-          <div className="flex justify-between mb-6 items-end">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Featured
-              </h1>
-            </div>
-            <Link
-              href="/featured"
-              className="flex gap-2 text-secondary-foreground hover:text-primary-foreground transition-colors duration-150"
-            >
-              <p className="text-sm">Featured products</p>
-              <i className="ri-arrow-right-up-line"></i>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <Link href={`/products/${product.id}`}>
-                <FeaturedCard
-                  title={product.name}
-                  imageURL={product.images[0] || ""}
-                  price={product.price}
-                />
-              </Link>
-            ))}
-          </div>
+          <FeaturedProducts />
         </div>
       </div>
     </div>

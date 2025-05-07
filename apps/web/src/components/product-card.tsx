@@ -57,29 +57,32 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <img
             src={images[0]}
             alt={name}
-            className="w-full h-48 object-cover"
+            // className="w-full h-48 object-cover"
+            className="w-full h-full aspect-square object-cover"
           />
         </Link>
         <div className="p-4">
-          <span
-            className={cn(
-              "text-sm font-medium  px-2 py-1 rounded-full",
-              category === productCategory.women_bagpacks &&
-                "text-emerald-500 bg-emerald-100",
-              category === productCategory.baby_products &&
-                "text-cyan-500 bg-cyan-100",
-              category === productCategory.mobile_accessories &&
-                "text-amber-500 bg-amber-100"
-            )}
-          >
-            {formatCategory(category)}
-          </span>
-          <Link href={`/products/${id}`}>
-            <h3 className="text-lg font-semibold mt-3">{name}</h3>
-            <p className="text-gray-600 text-sm mt-2 line-clamp-2">
-              {description}
-            </p>
-          </Link>
+          <div className="h-36">
+            <span
+              className={cn(
+                "text-xs px-2 py-1 rounded-full",
+                category === productCategory.women_bagpacks &&
+                  "text-emerald-500 bg-emerald-300/30",
+                category === productCategory.baby_products &&
+                  "text-cyan-500 bg-cyan-300/30",
+                category === productCategory.mobile_accessories &&
+                  "text-amber-500 bg-amber-300/30"
+              )}
+            >
+              {formatCategory(category)}
+            </span>
+            <Link href={`/products/${id}`}>
+              <h3 className="text-lg font-semibold mt-3">{name}</h3>
+              <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                {description}
+              </p>
+            </Link>
+          </div>
           <div className="flex items-center justify-between mt-4">
             <span className="text-xl font-bold">₹{price}</span>
             <button
