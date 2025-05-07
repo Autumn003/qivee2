@@ -320,3 +320,8 @@ export async function updatePassword(oldPassword: string, newPassword: string) {
 
   return { success: true, message: "Password updated successfully" };
 }
+
+export async function getAllUsers() {
+  const users = await db.user.findMany();
+  return { success: true, users, message: "Users retrieved successfully" };
+}
