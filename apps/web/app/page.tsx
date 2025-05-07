@@ -1,6 +1,5 @@
-import { FeaturedCard } from "@/components";
 import { Carousel } from "@/components/carousel";
-import Link from "next/link";
+import { FeaturedProducts } from "@/components";
 export default function Home() {
   const heroSlides = [
     {
@@ -52,33 +51,6 @@ export default function Home() {
       name: "Baby Products",
       image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
       target: "/products?category=baby-products",
-    },
-  ];
-
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Classic White Sneakers",
-      price: 89.99,
-      image: "https://images.unsplash.com/photo-1491553895911-0055eca6402d",
-    },
-    {
-      id: 2,
-      name: "Leather Tote Bag",
-      price: 129.99,
-      image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa",
-    },
-    {
-      id: 3,
-      name: "Minimal Watch",
-      price: 199.99,
-      image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314",
-    },
-    {
-      id: 4,
-      name: "Silk Summer Dress",
-      price: 159.99,
-      image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
     },
   ];
 
@@ -171,24 +143,7 @@ export default function Home() {
 
       {/* FEATURED PRODUCTS */}
       <section className="container mx-auto mb-20">
-        <h2 className="text-2xl font-bold mb-8 text-center">
-          Featured Products
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <Link
-              href={`/products/${product.id}`}
-              key={product.id}
-              className="group"
-            >
-              <FeaturedCard
-                title={product.name}
-                imageURL={product.image}
-                price={product.price}
-              />
-            </Link>
-          ))}
-        </div>
+        <FeaturedProducts />
       </section>
 
       {/* Features Section */}
