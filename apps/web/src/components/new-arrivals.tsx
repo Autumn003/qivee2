@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getAllProducts } from "actions/product.action";
 import { Product } from "@prisma/client";
 import { addToWishlist } from "actions/wishlist.action";
+import FeaturedCard from "./featured-card";
 
 export default function NewArrivals() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -170,7 +171,7 @@ export default function NewArrivals() {
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-lg font-medium">
-                        ${product.price.toFixed(2)}
+                        ₹{product.price.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -206,50 +207,13 @@ export default function NewArrivals() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group rounded-xl border border-muted-foreground overflow-hidden hover:border-primary-foreground/50 transition-colors duration-150"
-              >
-                <Link href={`/products/${product.id}`}>
-                  <div className="aspect-square overflow-hidden relative">
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          addToWishlistHandler(product.id);
-                        }}
-                        className="h-10 w-10 rounded-full bg-secondary-background/30 hover:bg-red-100/80 hover:text-red-400 backdrop-blur-md transition-colors duration-200"
-                      >
-                        {loadingProductId === product.id ? (
-                          <div className="animate-spin">
-                            <i className="ri-loader-4-line text-xl"></i>
-                          </div>
-                        ) : (
-                          <i className="ri-heart-line text-xl"></i>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-secondary-foreground group-hover:text-primary-foreground transition-colors duration-150">
-                        {product.name}
-                      </h3>
-                      <i className="ri-arrow-right-up-line text-xl text-muted-foreground group-hover:text-primary-foreground transition-colors duration-150"></i>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-lg font-medium">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+              <Link href={`/products/${product.id}`}>
+                <FeaturedCard
+                  title={product.name}
+                  imageURL={product.images[0] || ""}
+                  price={product.price}
+                />
+              </Link>
             ))}
           </div>
         </div>

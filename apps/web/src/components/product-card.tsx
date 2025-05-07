@@ -81,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           </Link>
           <div className="flex items-center justify-between mt-4">
-            <span className="text-xl font-bold">${price}</span>
+            <span className="text-xl font-bold">₹{price}</span>
             <button
               disabled={loading}
               onClick={!loading ? () => addToCartHandler(id) : undefined}

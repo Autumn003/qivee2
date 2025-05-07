@@ -226,7 +226,7 @@ export default function AdminProducts() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">${product.price}</td>
+                    <td className="p-4">₹{product.price}</td>
                     <td className="p-4">{product.stock}</td>
                     <td className="p-4">
                       {new Date(product.createdAt || "").toLocaleDateString(

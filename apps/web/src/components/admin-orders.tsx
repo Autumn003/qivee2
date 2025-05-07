@@ -374,12 +374,12 @@ export default function AdminOrders() {
                                 <i className="ri-arrow-right-up-line ml-1 text-lg"></i>
                               </Link>
                               <p className="text-sm text-secondary-foreground">
-                                Qty: {item.quantity} × ${item.price}
+                                Qty: {item.quantity} × ₹{item.price}
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="font-medium">
-                                ${item.quantity * item.price}
+                                ₹{item.quantity * item.price}
                               </p>
                             </div>
                           </div>
@@ -394,7 +394,7 @@ export default function AdminOrders() {
                                 Total
                               </span>
                               <span className="font-semibold text-xl">
-                                ${order.totalPrice}
+                                ₹{order.totalPrice}
                               </span>
                             </div>
                           </div>

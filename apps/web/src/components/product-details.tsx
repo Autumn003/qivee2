@@ -180,7 +180,7 @@ export default function ProductDetails() {
                 </h1>
                 <div className="flex items-center space-x-4 space-y-2">
                   <p className="text-2xl font-semibold text-primary-foreground">
-                    ${product.price.toFixed(2)}
+                    ₹{product.price.toFixed(2)}
                   </p>
                 </div>
               </div>

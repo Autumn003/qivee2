@@ -145,7 +145,7 @@ export default function Cart() {
                           {item.name}
                         </h3>
                         <p className="mt-1 text-sm font-medium text-primary-foreground">
-                          ${item.price.toFixed(2)}
+                          ₹{item.price.toFixed(2)}
                         </p>
                       </div>
 
@@ -242,21 +242,21 @@ export default function Cart() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Subtotal</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Shipping</span>
-                    <span className="font-medium">${shipping.toFixed(2)}</span>
+                    <span className="font-medium">₹{shipping.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Tax</span>
-                    <span className="font-medium">${tax.toFixed(2)}</span>
+                    <span className="font-medium">₹{tax.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-muted-foreground pt-3">
                     <div className="flex justify-between">
                       <span className="text-base font-medium">Total</span>
                       <span className="text-base font-medium">
-                        ${total.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                   </div>
