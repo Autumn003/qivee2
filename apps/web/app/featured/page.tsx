@@ -3,8 +3,9 @@ import { Featured } from "@/components";
 import { Product } from "@prisma/client";
 
 export const metadata = {
-  title: "New Arrivals | Qivee",
-  description: "Discover our latest collection of premium products",
+  title: "Featured Items | Qivee",
+  description:
+    "Explore Qivee's handpicked selection of featured products, showcasing the best in quality, style, and innovation.",
 };
 
 export default async function Page() {
