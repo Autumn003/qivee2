@@ -27,12 +27,19 @@ interface WishlistItemWithDetails {
   createdAt: Date;
 }
 
-export default function Wishlist() {
-  const [wishlist, setWishlist] = useState<WishlistItemWithDetails[]>([]);
+export default function Wishlist({
+  initialItems,
+}: {
+  initialItems: WishlistItemWithDetails[];
+}) {
+  const [wishlist, setWishlist] = useState<WishlistItemWithDetails[]>(
+    initialItems || []
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [showInStockOnly, setShowInStockOnly] = useState(false);
 
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(!initialItems);
   const [isAddCartLoading, setIsAddCartLoading] = useState<{
     [key: string]: boolean;
   }>({});
@@ -82,15 +89,20 @@ export default function Wishlist() {
   };
 
   useEffect(() => {
-    async function fetchCartItems() {
-      const response = await getWishlist();
-      if (response.success) {
-        setWishlist(response.wishlistItems);
-      } else {
-        console.error("Failed to fetch products:", response.error);
+    if (!initialItems) {
+      setLoading(true);
+      async function fetchWishlistItems() {
+        const response = await getWishlist();
+        if (response.success) {
+          setWishlist(response.wishlistItems);
+        } else {
+          console.error("Failed to fetch products:", response.error);
+        }
       }
+      fetchWishlistItems();
+    } else {
+      setLoading(false);
     }
-    fetchCartItems();
   }, []);
 
   return (
