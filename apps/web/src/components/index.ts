@@ -21,6 +21,7 @@ import FeaturedProducts from "./featured-products";
 import AdminDashboard from "./admin-dashboard";
 import { DashboardSkeleton } from "./dashboard-skeleton";
 import ProductSkeletonLoader from "./product-skeleton-loader";
+import Products from "./products";
 
 export {
   Header,
@@ -46,4 +47,5 @@ export {
   AdminDashboard,
   DashboardSkeleton,
   ProductSkeletonLoader,
+  Products,
 };

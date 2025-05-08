@@ -7,8 +7,13 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { getAllProducts } from "actions/product.action";
 import { Product, productCategory } from "@prisma/client";
+import ProductSkeletonLoader from "./product-skeleton-loader";
 
-const Products = () => {
+const Products = ({
+  initialProducts,
+}: {
+  initialProducts: Product[] | null;
+}) => {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">(
@@ -19,7 +24,8 @@ const Products = () => {
     | null
     | "All";
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [isLoading, setIsLoading] = useState(!initialProducts);
 
   const filteredProducts = (
     !selectedCategory || selectedCategory === "All"
@@ -68,13 +74,17 @@ const Products = () => {
   }, [lastScrollY]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const response = await getAllProducts();
-      if (response.success) {
-        setProducts(response.products);
-      }
-    };
-    fetchProducts();
+    if (!initialProducts) {
+      const fetchProducts = async () => {
+        const response = await getAllProducts();
+        if (response.success) {
+          setProducts(response.products);
+        }
+      };
+      fetchProducts();
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   return (
@@ -121,16 +131,22 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              className="md:my-5 my-2"
-              key={product.id}
-              {...product}
-            />
-          ))}
-        </div>
+        {/* Products Grid or Skeleton */}
+        {isLoading ? (
+          <ProductSkeletonLoader count={12} />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  className="md:my-5 my-2"
+                  key={product.id}
+                  {...product}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,25 @@
-import Products from "@/components/products";
+import { getAllProducts } from "actions/product.action";
+import { Products } from "@/components";
+import { Product } from "@prisma/client";
 
-const page = () => {
-  return <Products />;
+export const metadata = {
+  title: "All Products | Qivee",
+  description:
+    "Browse Qivee's full range of products across all categories, designed to meet your every need with quality and style.",
 };
 
-export default page;
+export default async function Page() {
+  // Fetch products server-side
+  let products: Product[] | null = null;
+
+  try {
+    const response = await getAllProducts();
+    if (response.success) {
+      products = response.products;
+    }
+  } catch (error) {
+    console.error("Failed to fetch products server-side", error);
+  }
+
+  return <Products initialProducts={products} />;
+}
