@@ -18,6 +18,8 @@ import NewArrivals from "./new-arrivals";
 import Featured from "./featured";
 import { DynamicToaster } from "./dynamic-toaster";
 import FeaturedProducts from "./featured-products";
+import AdminDashboard from "./admin-dashboard";
+import { DashboardSkeleton } from "./dashboard-skeleton";
 
 export {
   Header,
@@ -40,4 +42,6 @@ export {
   Featured,
   DynamicToaster,
   FeaturedProducts,
+  AdminDashboard,
+  DashboardSkeleton,
 };
