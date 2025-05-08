@@ -10,6 +10,10 @@ import { Product, productCategory } from "@prisma/client";
 
 const Products = () => {
   const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">(
+    "newest"
+  );
   const selectedCategory = searchParams.get("category") as
     | productCategory
     | null
@@ -17,13 +21,34 @@ const Products = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
 
-  const filteredProducts =
+  const filteredProducts = (
     !selectedCategory || selectedCategory === "All"
       ? products
       : products.filter(
           (product) =>
             product.category === (selectedCategory as productCategory)
-        );
+        )
+  )
+    .filter((product) => {
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        default:
+          return 0;
+      }
+    });
 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -68,6 +93,32 @@ const Products = () => {
           )}
         >
           <Dropdown className="flex" showcategory={true} />
+        </div>
+        {/* Filters and Search */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+          <div className="flex-1">
+            <div className="relative">
+              <i className="ri-search-line text-xl absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-foreground"></i>
+              <input
+                type="text"
+                placeholder="Search for a featured product"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20"
+              />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20 bg-primary-background"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Products Grid */}
