@@ -26,9 +26,16 @@ interface CartItemWithDetails {
   quantity: number;
 }
 
-export default function Cart() {
-  const [cartItems, setCartItems] = useState<CartItemWithDetails[]>([]);
+export default function Cart({
+  initialItems,
+}: {
+  initialItems: CartItemWithDetails[];
+}) {
+  const [cartItems, setCartItems] = useState<CartItemWithDetails[]>(
+    initialItems || []
+  );
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(!initialItems);
   const [isQuantityLoading, setIsQuantityLoading] = useState<{
     [key: string]: boolean;
   }>({});
@@ -95,15 +102,17 @@ export default function Cart() {
   const total = subtotal + shipping + tax;
 
   useEffect(() => {
-    async function fetchCartItems() {
-      const response = await getCart();
-      if (response.success) {
-        setCartItems(response.cartItems);
-      } else {
-        console.error("Failed to fetch products:", response.error);
+    if (!initialItems) {
+      async function fetchCartItems() {
+        const response = await getCart();
+        if (response.success) {
+          setCartItems(response.cartItems);
+        } else {
+          console.error("Failed to fetch products:", response.error);
+        }
       }
+      fetchCartItems();
     }
-    fetchCartItems();
   }, []);
 
   return (
