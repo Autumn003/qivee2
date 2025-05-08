@@ -20,6 +20,7 @@ import { DynamicToaster } from "./dynamic-toaster";
 import FeaturedProducts from "./featured-products";
 import AdminDashboard from "./admin-dashboard";
 import { DashboardSkeleton } from "./dashboard-skeleton";
+import ProductSkeletonLoader from "./product-skeleton-loader";
 
 export {
   Header,
@@ -44,4 +45,5 @@ export {
   FeaturedProducts,
   AdminDashboard,
   DashboardSkeleton,
+  ProductSkeletonLoader,
 };

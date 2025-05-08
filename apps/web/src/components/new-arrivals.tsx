@@ -5,16 +5,26 @@ import Link from "next/link";
 import { getAllProducts } from "actions/product.action";
 import { Product } from "@prisma/client";
 import { addToWishlist } from "actions/wishlist.action";
+import ProductSkeletonLoader from "./product-skeleton-loader";
 import FeaturedProducts from "./featured-products";
 
-export default function NewArrivals() {
+interface Props {
+  initialProducts: Product[] | null;
+  initialFeaturedProducts: Product[] | null;
+}
+
+export default function NewArrivals({
+  initialProducts,
+  initialFeaturedProducts,
+}: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">(
-    "newest"
+  const [sortBy, setSortBy] = useState("newest");
+  const [loadingProductId, setLoadingProductId] = useState(null);
+  const [newArrivals, setNewArrivals] = useState(initialProducts || []);
+  const [featuredProducts, setFeaturedProducts] = useState(
+    initialFeaturedProducts || []
   );
-  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
-  const [newArrivals, setnewArrivals] = useState<Product[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(!initialProducts);
 
   // Filter and sort products
   const filteredProducts = newArrivals
@@ -39,7 +49,7 @@ export default function NewArrivals() {
       }
     });
 
-  const addToWishlistHandler = async (productId: string) => {
+  const addToWishlistHandler = async (productId: any) => {
     try {
       setLoadingProductId(productId);
       const response = await addToWishlist(productId);
@@ -57,23 +67,31 @@ export default function NewArrivals() {
   };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await getAllProducts();
-        if (response.success) {
-          setnewArrivals(response.products.slice(0, 12));
-          const featuredProducts = response.products
-            .filter((product: Product) => product.isFeatured)
-            .slice(0, 4);
+    // Only fetch if we don't have initial data from server
+    if (!initialProducts) {
+      const fetchProducts = async () => {
+        try {
+          setIsLoading(true);
+          const response = await getAllProducts();
+          if (response.success) {
+            setNewArrivals(response.products.slice(0, 12));
+            const featured = response.products
+              .filter((product) => product.isFeatured)
+              .slice(0, 4);
 
-          setFeaturedProducts(featuredProducts);
+            setFeaturedProducts(featured);
+          }
+        } catch (error) {
+          console.error("Failed to fetch products", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch products", error);
-      }
-    };
-    fetchProducts();
-  }, []);
+      };
+      fetchProducts();
+    } else {
+      setIsLoading(false);
+    }
+  }, [initialProducts]);
 
   return (
     <div className="min-h-screen">
@@ -115,7 +133,7 @@ export default function NewArrivals() {
             <div className="flex gap-4">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20 bg-primary-background"
               >
                 <option value="newest">Newest First</option>
@@ -125,69 +143,77 @@ export default function NewArrivals() {
             </div>
           </div>
 
-          {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group rounded-xl border border-muted-foreground overflow-hidden hover:border-primary-foreground/50 transition-colors duration-150"
-              >
-                <Link href={`/products/${product.id}`}>
-                  <div className="aspect-square overflow-hidden relative">
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          addToWishlistHandler(product.id);
-                        }}
-                        className="h-10 w-10 rounded-full bg-secondary-background/30 hover:bg-red-100/80 hover:text-red-400 backdrop-blur-md transition-colors duration-200"
-                      >
-                        {loadingProductId === product.id ? (
-                          <div className="animate-spin">
-                            <i className="ri-loader-4-line text-xl"></i>
-                          </div>
-                        ) : (
-                          <i className="ri-heart-line text-xl"></i>
-                        )}
-                      </button>
-                    </div>
-                    <div className="absolute top-3 left-2">
-                      <span className="px-2 py-0.5 rounded-full text-emerald-500 bg-emerald-400/30 border-emerald-400 border backdrop-blur-md transition-colors duration-200 text-sm">
-                        New
-                      </span>
-                    </div>
+          {/* Products Grid or Skeleton */}
+          {isLoading ? (
+            <ProductSkeletonLoader count={12} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="group rounded-xl border border-muted-foreground overflow-hidden hover:border-primary-foreground/50 transition-colors duration-150"
+                  >
+                    <Link href={`/products/${product.id}`}>
+                      <div className="aspect-square overflow-hidden relative">
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              addToWishlistHandler(product.id);
+                            }}
+                            className="h-10 w-10 rounded-full bg-secondary-background/30 hover:bg-red-100/80 hover:text-red-400 backdrop-blur-md transition-colors duration-200"
+                          >
+                            {loadingProductId === product.id ? (
+                              <div className="animate-spin">
+                                <i className="ri-loader-4-line text-xl"></i>
+                              </div>
+                            ) : (
+                              <i className="ri-heart-line text-xl"></i>
+                            )}
+                          </button>
+                        </div>
+                        <div className="absolute top-3 left-2">
+                          <span className="px-2 py-0.5 rounded-full text-emerald-500 bg-emerald-400/30 border-emerald-400 border backdrop-blur-md transition-colors duration-200 text-sm">
+                            New
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium text-secondary-foreground group-hover:text-primary-foreground transition-colors duration-150">
+                            {product.name}
+                          </h3>
+                          <i className="ri-arrow-right-up-line text-xl text-muted-foreground group-hover:text-primary-foreground transition-colors duration-150"></i>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                          <p className="text-lg font-medium">
+                            ₹{product.price.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
                   </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-secondary-foreground group-hover:text-primary-foreground transition-colors duration-150">
-                        {product.name}
-                      </h3>
-                      <i className="ri-arrow-right-up-line text-xl text-muted-foreground group-hover:text-primary-foreground transition-colors duration-150"></i>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-lg font-medium">
-                        ₹{product.price.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <i className="ri-error-warning-line text-6xl mx-auto text-muted-foreground"></i>
-              <h2 className="mt-4 text-lg font-medium">No products found</h2>
-              <p className="mt-2 text-muted-foreground">
-                Try adjusting your search or filter settings
-              </p>
-            </div>
+              {filteredProducts.length === 0 && !isLoading && (
+                <div className="text-center py-12">
+                  <i className="ri-error-warning-line text-6xl mx-auto text-muted-foreground"></i>
+                  <h2 className="mt-4 text-lg font-medium">
+                    No products found
+                  </h2>
+                  <p className="mt-2 text-muted-foreground">
+                    Try adjusting your search or filter settings
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className={`my-16 ${featuredProducts.length < 1 ? "hidden" : ""}`}>
