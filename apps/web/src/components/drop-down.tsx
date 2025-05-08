@@ -56,7 +56,7 @@ const Dropdown = ({
             isOpen && "text-primary-foreground"
           )}
         >
-          <h4>Categories</h4>
+          <p className="text-sm">Categories</p>
           <i className="ri-arrow-down-s-line mx-1"></i>
         </div>
       </button>
