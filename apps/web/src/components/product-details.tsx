@@ -10,9 +10,15 @@ import { addToCart } from "actions/cart.action";
 import { addToWishlist } from "actions/wishlist.action";
 import { toast } from "sonner";
 
-export default function ProductDetails() {
+export default function ProductDetails({
+  initialProduct,
+}: {
+  initialProduct: Product | null;
+}) {
   const [selectedImage, setSelectedImage] = useState(0);
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Product | null>(
+    initialProduct || null
+  );
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
@@ -75,14 +81,18 @@ export default function ProductDetails() {
   };
 
   useEffect(() => {
-    if (productId) {
-      const fetchProduct = async () => {
-        const response = await getproductById(productId || "");
-        if (response?.success) {
-          setProduct(response.product);
-        }
-      };
-      fetchProduct();
+    if (!product) {
+      if (productId) {
+        const fetchProduct = async () => {
+          const response = await getproductById(productId || "");
+          if (response?.success) {
+            setProduct(response.product);
+          }
+        };
+        fetchProduct();
+      }
+    } else {
+      setLoading(false);
     }
   }, [productId]);
 
