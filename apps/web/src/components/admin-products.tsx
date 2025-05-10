@@ -12,6 +12,7 @@ import {
   updateProduct,
 } from "actions/product.action";
 import { toast } from "sonner";
+import { productCategory } from "@prisma/client";
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
@@ -24,6 +25,12 @@ export default function AdminProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">(
+    "newest"
+  );
+  const [categoryFilter, setCategoryFilter] = useState<productCategory | "All">(
+    "All"
+  );
 
   useEffect(() => {
     async function fetchProducts() {
@@ -144,11 +151,39 @@ export default function AdminProducts() {
     }
   };
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Handle category change
+  const handleCategoryChange = (category: productCategory | "All") => {
+    setCategoryFilter(category);
+  };
+
+  const filteredProducts = products
+    .filter((product) => {
+      if (categoryFilter !== "All") {
+        if (product.category !== categoryFilter) {
+          return false;
+        }
+      }
+
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return (
+            //@ts-ignore
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div className="min-h-screen p-8">
@@ -168,17 +203,43 @@ export default function AdminProducts() {
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <i className="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-foreground text-lg"></i>
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-primary-foreground/20"
-            />
+        {/* Filters and Search */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+          <div className="flex-1">
+            <div className="relative">
+              <i className="ri-search-line text-xl absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-foreground"></i>
+              <input
+                type="text"
+                placeholder="Search for a featured product"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20"
+              />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <select
+              value={categoryFilter}
+              onChange={(e) =>
+                handleCategoryChange(e.target.value as productCategory | "All")
+              }
+              className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20 bg-primary-background"
+            >
+              <option value="All">All Categories</option>
+              <option value="baby_products">Baby Products</option>
+              <option value="mobile_accessories">Mobile Accessories</option>
+              <option value="women_bagpacks">Women Bagpacks</option>
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-4 py-2 border border-muted-foreground rounded-lg focus:outline-none focus:ring focus:ring-secondary-background/20 bg-primary-background"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
           </div>
         </div>
 
