@@ -61,12 +61,22 @@ interface OrderWithItems extends Order {
   };
 }
 
+interface DashboardClientProps {
+  addresses: Address[];
+  orders: OrderWithItems[];
+  wishlistCount: number;
+}
+
 type UserNameFormValues = z.infer<typeof updateUserNameSchema>;
 type AvatarFormValues = z.infer<typeof updateUserAvatarSchema>;
 type AddressFormValues = z.infer<typeof addressSchema>;
 type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
 
-export default function Dashboard() {
+export default function Dashboard({
+  addresses: initialAddresses,
+  orders: initialOrders,
+  wishlistCount: initialWishlistCount,
+}: DashboardClientProps) {
   const { data: session, update } = useSession();
   const user = session?.user ?? ({} as User);
 
@@ -96,11 +106,13 @@ export default function Dashboard() {
     },
   });
 
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(initialWishlistCount || 0);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [recentOrders, setRecentOrders] = useState<OrderWithItems[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>(initialAddresses || []);
+  const [recentOrders, setRecentOrders] = useState<OrderWithItems[]>(
+    initialOrders || []
+  );
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -272,47 +284,54 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    async function fetchAddresses() {
-      const response = await getUserAddresses();
-      if (response.success) {
-        setAddresses(response.addresses);
+    if (!initialAddresses) {
+      async function fetchAddresses() {
+        const response = await getUserAddresses();
+        if (response.success) {
+          setAddresses(response.addresses);
+        }
       }
+      fetchAddresses();
     }
-    fetchAddresses();
   }, []);
 
   useEffect(() => {
     if (!user.id) return;
-    async function fetchOrders() {
-      const response = await getOrdersByUserId(user.id || "");
-      if (response.success) {
-        const formatedOrders = response.orders.map((order) => ({
-          ...order,
-          shippingAddress: order.shippingAddress || {},
-          items: order.orderItems.map((orderItem) => ({
-            id: orderItem.id,
-            productId: orderItem.product.id,
-            orderId: orderItem.orderId,
-            name: orderItem.product.name,
-            price: orderItem.price,
-            quantity: orderItem.quantity,
-            image: orderItem.product.images[0] || "",
-          })),
-        }));
-        setRecentOrders(formatedOrders);
+    if (!initialOrders) {
+      async function fetchOrders() {
+        const response = await getOrdersByUserId(user.id || "");
+        if (response.success) {
+          const formatedOrders = response.orders.map((order) => ({
+            ...order,
+            shippingAddress: order.shippingAddress || {},
+            items: order.orderItems.map((orderItem) => ({
+              id: orderItem.id,
+              productId: orderItem.product.id,
+              orderId: orderItem.orderId,
+              name: orderItem.product.name,
+              price: orderItem.price,
+              quantity: orderItem.quantity,
+              image: orderItem.product.images[0] || "",
+            })),
+          }));
+          setRecentOrders(formatedOrders);
+        }
       }
-    }
-    async function fetchWishlist() {
-      const response = await getWishlist();
-      if (response.success) {
-        setWishlistCount(response.wishlistItems.length);
-      } else {
-        console.error("Failed to fetch products:", response.error);
-      }
+      fetchOrders();
     }
 
-    fetchOrders();
-    fetchWishlist();
+    if (!initialWishlistCount) {
+      async function fetchWishlist() {
+        const response = await getWishlist();
+        if (response.success) {
+          setWishlistCount(response.wishlistItems.length);
+        } else {
+          console.error("Failed to fetch products:", response.error);
+        }
+      }
+
+      fetchWishlist();
+    }
   }, [user.id]);
 
   const addressForm = useForm<AddressFormValues>({
