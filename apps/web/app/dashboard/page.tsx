@@ -6,6 +6,12 @@ import { getOrdersByUserId } from "actions/order.action";
 import { getWishlist } from "actions/wishlist.action";
 import { Dashboard } from "@/components";
 
+export const metadata = {
+  title: "Your Dashboard | Qivee",
+  description:
+    "Manage your Qivee profile, track orders, update personal details, and view your activity all in one place.",
+};
+
 export default async function DashboardPage() {
   // Get session server-side
   const session = await getServerSession(authOptions);
