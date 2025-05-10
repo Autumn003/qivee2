@@ -12,12 +12,18 @@ import {
   updateProduct,
 } from "actions/product.action";
 import { toast } from "sonner";
-import { productCategory } from "@prisma/client";
+import { Product, productCategory } from "@prisma/client";
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
-export default function AdminProducts() {
-  const [products, setProducts] = useState<ProductFormValues[]>([]);
+export default function AdminProducts({
+  initialProducts,
+}: {
+  initialProducts: Product[] | null;
+}) {
+  const [products, setProducts] = useState<ProductFormValues[]>(
+    initialProducts || []
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] =
     useState<ProductFormValues | null>(null);
@@ -33,15 +39,17 @@ export default function AdminProducts() {
   );
 
   useEffect(() => {
-    async function fetchProducts() {
-      const response = await getAllProducts();
-      if (response.success) {
-        setProducts(response.products);
-      } else {
-        console.error("Failed to fetch products:", response.error);
+    if (!initialProducts) {
+      async function fetchProducts() {
+        const response = await getAllProducts();
+        if (response.success) {
+          setProducts(response.products);
+        } else {
+          console.error("Failed to fetch products:", response.error);
+        }
       }
+      fetchProducts();
     }
-    fetchProducts();
   }, []);
 
   const form = useForm<ProductFormValues>({
