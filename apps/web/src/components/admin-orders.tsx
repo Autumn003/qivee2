@@ -59,6 +59,10 @@ export default function AdminOrders() {
     [key: string]: boolean;
   }>({});
 
+  const calculateSubtotal = (items: ExtendedOrderItem[]) => {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
+
   useEffect(() => {
     async function fetchOrders() {
       const response = await getAllOrders();
@@ -385,73 +389,100 @@ export default function AdminOrders() {
                           </div>
                         ))}
                       </div>
-                      {/* Order Summary */}
-                      <div className="mt-6 pt-6 border-t border-muted-foreground">
-                        <div className="flex justify-end">
-                          <div className="w-full sm:w-72">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-primary-foreground font-semibold text-xl">
-                                Total
-                              </span>
-                              <span className="font-semibold text-xl">
-                                ₹{order.totalPrice}
-                              </span>
+                      <div className="flex md:flex-row flex-col-reverse gap-5 border-t border-muted-foreground mt-6 pt-6">
+                        {/* Action Buttons */}
+                        {user?.role === UserRole.ADMIN && (
+                          <div className="mt-auto flex flex-wrap md:justify-normal justify-between gap-4 w-full">
+                            <button
+                              onClick={() => setEditingOrder(order)}
+                              className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer h-fit"
+                            >
+                              Edit Order
+                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  onClick={() => setOrderToDelete(order)}
+                                  className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer h-fit"
+                                >
+                                  {deleteLoading[order.id] ? (
+                                    <div className="flex justify-center items-center gap-2">
+                                      <div className="animate-spin">
+                                        <i className="ri-loader-4-line text-xl"></i>
+                                      </div>
+                                      Delete Order
+                                    </div>
+                                  ) : (
+                                    <>Delete Order</>
+                                  )}
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Remove from wishlist?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete order with
+                                    order ID: <strong>{order.id}</strong>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                                    onClick={handleDeleteOrder}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
+
+                        {/* Order Summary */}
+                        <div className="w-full">
+                          <div className="flex justify-end">
+                            <div className="w-full sm:w-72">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-secondary-foreground">
+                                  Subtotal
+                                </span>
+                                <span className="font-medium">
+                                  ₹{calculateSubtotal(order.items)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between py-1 text-sm">
+                                <span className="text-secondary-foreground">
+                                  Shipping
+                                </span>
+                                <span className="font-medium">
+                                  ₹{order.shippingCost}
+                                </span>
+                              </div>
+                              <div className="flex justify-between py-1 text-sm">
+                                <span className="text-secondary-foreground">
+                                  Tax
+                                </span>
+                                <span className="font-medium">
+                                  ₹{order.tax}
+                                </span>
+                              </div>
+                              <div className="flex justify-between py-4">
+                                <span className="text-primary-foreground font-semibold text-xl">
+                                  Total
+                                </span>
+                                <span className="font-semibold text-xl">
+                                  ₹{order.totalPrice}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                      {/* Action Buttons */}
-                      {user?.role === UserRole.ADMIN && (
-                        <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
-                          <button
-                            onClick={() => setEditingOrder(order)}
-                            className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer"
-                          >
-                            Edit Order
-                          </button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <button
-                                onClick={() => setOrderToDelete(order)}
-                                className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer"
-                              >
-                                {deleteLoading[order.id] ? (
-                                  <div className="flex justify-center items-center gap-2">
-                                    <div className="animate-spin">
-                                      <i className="ri-loader-4-line text-xl"></i>
-                                    </div>
-                                    Delete Order
-                                  </div>
-                                ) : (
-                                  <>Delete Order</>
-                                )}
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Remove from wishlist?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete order with
-                                  order ID: <strong>{order.id}</strong>
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150">
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
-                                  onClick={handleDeleteOrder}
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

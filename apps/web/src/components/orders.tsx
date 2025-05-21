@@ -81,6 +81,10 @@ export default function Orders() {
     }
   };
 
+  const calculateSubtotal = (items: ExtendedOrderItem[]) => {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
+
   useEffect(() => {
     if (!userId) return;
     async function fetchOrders() {
@@ -309,72 +313,95 @@ export default function Orders() {
                       </div>
                     ))}
                   </div>
+                  <div className="flex md:flex-row flex-col-reverse border-t border-muted-foreground mt-6 pt-6">
+                    {/* Action Buttons */}
+                    <div className="mt-auto flex flex-wrap md:justify-normal justify-between gap-4 w-full">
+                      <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer h-fit">
+                        Contact Support
+                      </button>
+                      {order.status === OrderStatus.PROCESSING && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              onClick={() => setOrderToCancel(order)}
+                              className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer h-fit"
+                            >
+                              {isLoading[order.id] ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="animate-spin text-center">
+                                    <i className="ri-loader-4-line text-xl"></i>
+                                  </div>
+                                  Cancel Order
+                                </div>
+                              ) : (
+                                <>Cancel Order</>
+                              )}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel order?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to cancel order with Order
+                                ID: <strong>{order.id}</strong>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
+                                onClick={() => setOrderToCancel(null)}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
+                                onClick={cancelOrderHandler}
+                              >
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
 
-                  {/* Order Summary */}
-                  <div className="mt-6 pt-6 border-t border-muted-foreground">
-                    <div className="flex justify-end">
-                      <div className="w-full sm:w-72">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-primary-foreground font-semibold text-xl">
-                            Total
-                          </span>
-                          <span className="font-semibold text-xl">
-                            ₹{order.totalPrice}
-                          </span>
+                    {/* Order Summary */}
+                    <div className="w-full">
+                      <div className="flex justify-end">
+                        <div className="w-full sm:w-72">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-secondary-foreground">
+                              Subtotal
+                            </span>
+                            <span className="font-medium">
+                              ₹{calculateSubtotal(order.items)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1 text-sm">
+                            <span className="text-secondary-foreground">
+                              Shipping
+                            </span>
+                            <span className="font-medium">
+                              ₹{order.shippingCost}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1 text-sm">
+                            <span className="text-secondary-foreground">
+                              Tax
+                            </span>
+                            <span className="font-medium">₹{order.tax}</span>
+                          </div>
+                          <div className="flex justify-between py-4">
+                            <span className="text-primary-foreground font-semibold text-xl">
+                              Total
+                            </span>
+                            <span className="font-semibold text-xl">
+                              ₹{order.totalPrice}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mt-6 flex flex-wrap md:justify-normal justify-between gap-4">
-                    <button className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer">
-                      Contact Support
-                    </button>
-                    {order.status === OrderStatus.PROCESSING && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            onClick={() => setOrderToCancel(order)}
-                            className="px-4 py-2 border border-muted-foreground rounded-md hover:bg-secondary cursor-pointer"
-                          >
-                            {isLoading[order.id] ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <div className="animate-spin text-center">
-                                  <i className="ri-loader-4-line text-xl"></i>
-                                </div>
-                                Cancel Order
-                              </div>
-                            ) : (
-                              <>Cancel Order</>
-                            )}
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Cancel order?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to cancel order with Order
-                              ID: <strong>{order.id}</strong>
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel
-                              className="px-4 py-2 text-sm text-secondary-foreground hover:text-primary-foreground cursor-pointer border border-secondary-foreground hover:border-primary-foreground rounded-md transition-all duration-150"
-                              onClick={() => setOrderToCancel(null)}
-                            >
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              className="px-4 py-2 bg-secondary-background text-primary-background rounded-md hover:bg-secondary-background/80 cursor-pointer transition-all duration-150"
-                              onClick={cancelOrderHandler}
-                            >
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
                   </div>
                 </div>
               )}
