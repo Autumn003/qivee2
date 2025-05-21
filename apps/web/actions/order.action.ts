@@ -52,7 +52,9 @@ export async function createOrder(
   userId: string,
   addressId: string,
   paymentMethod: PaymentMethod,
-  items: { productId: string; quantity: number }[]
+  items: { productId: string; quantity: number }[],
+  shipping: number,
+  tax: number
 ) {
   if (!userId || !addressId || items.length === 0) {
     return { error: "Invalid order data" };
@@ -91,7 +93,7 @@ export async function createOrder(
         };
       }
 
-      totalPrice += product.price * quantity;
+      totalPrice += product.price * quantity + shipping + tax;
       orderItems.push({
         product: { connect: { id: productId } },
         quantity,

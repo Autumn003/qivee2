@@ -154,7 +154,9 @@ export default function Checkout() {
         cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-        }))
+        })),
+        shipping,
+        tax
       );
 
       setIsLoading(false);
