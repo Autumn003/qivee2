@@ -164,7 +164,7 @@ export default function Wishlist({
                     </Link>
                     <div className="mt-2 flex items-start space-x-4">
                       <p className="text-lg font-medium">
-                        ${item.price.toFixed(2)}
+                        ₹{item.price.toFixed(2)}
                       </p>
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
