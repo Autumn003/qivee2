@@ -45,8 +45,17 @@ export default function Checkout() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = 12.99;
-  const tax = subtotal * 0.1;
+
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const getShippingCharge = (itemCount: number) => {
+    if (itemCount <= 2) return 99.99;
+    if (itemCount <= 4) return 199.99;
+    if (itemCount <= 6) return 299.99;
+    return 300; // Default to 300 for more than 6 items
+  };
+
+  const shipping = getShippingCharge(totalItems);
+  const tax = subtotal * 0.18;
   const total = subtotal + shipping + tax;
 
   useEffect(() => {

@@ -97,8 +97,17 @@ export default function Cart({
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = 12.99;
-  const tax = subtotal * 0.1; // 10% tax
+
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const getShippingCharge = (itemCount: number) => {
+    if (itemCount <= 2) return 99.99;
+    if (itemCount <= 4) return 199.99;
+    if (itemCount <= 6) return 299.99;
+    return 300; // Default to 300 for more than 6 items
+  };
+
+  const shipping = getShippingCharge(totalItems);
+  const tax = subtotal * 0.18; // 18% tax
   const total = subtotal + shipping + tax;
 
   useEffect(() => {
@@ -257,6 +266,7 @@ export default function Cart({
                     <span className="text-secondary-foreground">Shipping</span>
                     <span className="font-medium">₹{shipping.toFixed(2)}</span>
                   </div>
+
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Tax</span>
                     <span className="font-medium">₹{tax.toFixed(2)}</span>
@@ -272,18 +282,27 @@ export default function Cart({
                 </div>
                 <Link
                   href="/checkout"
-                  className="w-full mt-6 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center"
+                  className="w-full mt-6 mb-4 bg-secondary-background text-primary-background cursor-pointer hover:bg-secondary-background/80 transition-colors duration-150 px-6 py-3 rounded-lg font-medium flex items-center justify-center"
                 >
                   Checkout
                   <i className="ri-arrow-right-line ml-2"></i>
                 </Link>
+                <div className="flex items-center text-xs text-info mt-1 text-muted-foreground">
+                  <i className="ri-information-line mr-1"></i>
+                  <span>
+                    Shipping charge is refundable only for online payments
+                  </span>
+                </div>
               </div>
 
               {/* Secure Checkout Notice */}
-              <div className="mt-6 p-4 bg-secondary/50 rounded-lg">
+              <div className="mt-4 p-4 bg-secondary/50 rounded-lg">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <i className="ri-shopping-bag-3-line text-lg mr-2"></i>
-                  <p>Secure checkout powered by Stripe</p>
+                  <p>
+                    Secure checkout powered by{" "}
+                    <span className="text-[#673ab7]">PhonePe</span>
+                  </p>
                 </div>
               </div>
             </div>
