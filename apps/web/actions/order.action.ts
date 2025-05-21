@@ -111,9 +111,20 @@ export async function createOrder(
         shippingCost: shipping,
         tax,
         status: "PROCESSING",
-        shippingAddressId: addressId,
+        // shippingAddressId: addressId,
         paymentMethod,
         paymentStatus: PaymentStatus.PENDING,
+
+        shippingAddress: {
+          name: address.name,
+          house: address.house,
+          street: address.street,
+          city: address.city,
+          zipCode: address.zipCode,
+          state: address.state,
+          country: address.country,
+          mobile: address.mobile,
+        },
 
         // Store snapshot of address details
         shippingName: address.name,
@@ -157,7 +168,6 @@ export async function getOrdersByUserId(userId: string) {
     },
     include: {
       orderItems: { include: { product: true } },
-      shippingAddress: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -304,7 +314,6 @@ export async function getAllOrders() {
   const orders = await db.order.findMany({
     include: {
       orderItems: { include: { product: true } },
-      shippingAddress: true,
     },
     orderBy: { createdAt: "desc" },
   });

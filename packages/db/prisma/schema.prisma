@@ -66,8 +66,8 @@ model Order {
   updatedAt         DateTime      @updatedAt
   userId            String
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingAddressId String
-  shippingAddress   Address       @relation(fields: [shippingAddressId], references: [id])
+
+  shippingAddress   Json
 
   // Snapshot of Address Fields
   shippingName    String
@@ -119,7 +119,6 @@ model Address {
   country   String
   mobile    String
   isDefault Boolean @default(false)
-  orders    Order[]
 }
 
 model WishlistItem {
