@@ -188,28 +188,25 @@ export default function OrderSuccess({ orderId }: { orderId: string }) {
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Subtotal</span>
                     <span className="font-medium">
-                      ₹{order.totalPrice.toFixed(2)}
+                      ₹
+                      {(
+                        order.totalPrice -
+                        (order.shippingCost + order.tax)
+                      ).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Shipping</span>
-                    <span className="font-medium">₹12.99</span>
+                    <span className="font-medium">₹{order.shippingCost}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Tax</span>
-                    <span className="font-medium">
-                      ₹{(order.totalPrice * 0.1).toFixed(2)}
-                    </span>
+                    <span className="font-medium">₹{order.tax}</span>
                   </div>
                   <div className="border-t border-muted-foreground pt-2 mt-2 flex justify-between">
                     <span className="font-medium">Total</span>
                     <span className="font-medium">
-                      ₹
-                      {(
-                        order.totalPrice +
-                        12.99 +
-                        order.totalPrice * 0.18
-                      ).toFixed(2)}
+                      ₹{order.totalPrice.toFixed(2)}
                     </span>
                   </div>
                 </div>

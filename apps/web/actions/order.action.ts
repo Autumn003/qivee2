@@ -80,6 +80,7 @@ export async function createOrder(
 
     // Validate products and calculate total price
     let totalPrice = 0;
+    let subToatal = 0;
     const orderItems = [];
 
     for (const { productId, quantity } of items) {
@@ -93,7 +94,8 @@ export async function createOrder(
         };
       }
 
-      totalPrice += product.price * quantity + shipping + tax;
+      subToatal += product.price * quantity;
+      totalPrice = subToatal + shipping + tax;
       orderItems.push({
         product: { connect: { id: productId } },
         quantity,
@@ -106,6 +108,8 @@ export async function createOrder(
       data: {
         userId,
         totalPrice,
+        shippingCost: shipping,
+        tax,
         status: "PROCESSING",
         shippingAddressId: addressId,
         paymentMethod,

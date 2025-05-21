@@ -57,6 +57,8 @@ model CartItem {
 model Order {
   id                String        @id @default(uuid())
   totalPrice        Float
+  shippingCost     Float
+  tax               Float
   status            OrderStatus   @default(PROCESSING)
   paymentMethod     PaymentMethod
   paymentStatus     PaymentStatus @default(PENDING)
