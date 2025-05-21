@@ -151,12 +151,12 @@ export default function OrderSuccess({ orderId }: { orderId: string }) {
                         {item.product.name}
                       </h4>
                       <p className="text-sm text-secondary-foreground">
-                        Qty: {item.quantity} × ${item.product.price.toFixed(2)}
+                        Qty: {item.quantity} × ₹{item.product.price.toFixed(2)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">
-                        ${(item.quantity * item.product.price).toFixed(2)}
+                        ₹{(item.quantity * item.product.price).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -188,27 +188,27 @@ export default function OrderSuccess({ orderId }: { orderId: string }) {
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Subtotal</span>
                     <span className="font-medium">
-                      ${order.totalPrice.toFixed(2)}
+                      ₹{order.totalPrice.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Shipping</span>
-                    <span className="font-medium">$12.99</span>
+                    <span className="font-medium">₹12.99</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-secondary-foreground">Tax</span>
                     <span className="font-medium">
-                      ${(order.totalPrice * 0.1).toFixed(2)}
+                      ₹{(order.totalPrice * 0.1).toFixed(2)}
                     </span>
                   </div>
                   <div className="border-t border-muted-foreground pt-2 mt-2 flex justify-between">
                     <span className="font-medium">Total</span>
                     <span className="font-medium">
-                      $
+                      ₹
                       {(
                         order.totalPrice +
                         12.99 +
-                        order.totalPrice * 0.1
+                        order.totalPrice * 0.18
                       ).toFixed(2)}
                     </span>
                   </div>
