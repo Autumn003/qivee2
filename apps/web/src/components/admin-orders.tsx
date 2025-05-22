@@ -41,10 +41,14 @@ interface OrderWithItems extends Order {
   };
 }
 
-export default function AdminOrders() {
+export default function AdminOrders({
+  initialOrders,
+}: {
+  initialOrders: OrderWithItems[] | null;
+}) {
   const { data: session } = useSession();
   const user = session?.user;
-  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [orders, setOrders] = useState<OrderWithItems[]>(initialOrders || []);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Order["status"] | "all">(
@@ -64,26 +68,28 @@ export default function AdminOrders() {
   };
 
   useEffect(() => {
-    async function fetchOrders() {
-      const response = await getAllOrders();
-      if (response.success) {
-        const formattedOrders = response.orders.map((order) => ({
-          ...order,
-          shippingAddress: order.shippingAddress || {},
-          items: order.orderItems.map((orderItem) => ({
-            id: orderItem.id,
-            productId: orderItem.product.id,
-            orderId: orderItem.orderId,
-            name: orderItem.product.name,
-            price: orderItem.price,
-            quantity: orderItem.quantity,
-            image: orderItem.product.images[0] || "",
-          })),
-        }));
-        setOrders(formattedOrders);
+    if (!initialOrders) {
+      async function fetchOrders() {
+        const response = await getAllOrders();
+        if (response.success) {
+          const formattedOrders = response.orders.map((order) => ({
+            ...order,
+            shippingAddress: order.shippingAddress || {},
+            items: order.orderItems.map((orderItem) => ({
+              id: orderItem.id,
+              productId: orderItem.product.id,
+              orderId: orderItem.orderId,
+              name: orderItem.product.name,
+              price: orderItem.price,
+              quantity: orderItem.quantity,
+              image: orderItem.product.images[0] || "",
+            })),
+          }));
+          setOrders(formattedOrders);
+        }
       }
+      fetchOrders();
     }
-    fetchOrders();
   }, []);
 
   const filteredOrders = orders.filter((order) => {

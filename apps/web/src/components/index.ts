@@ -22,6 +22,7 @@ import AdminDashboard from "./admin-dashboard";
 import { DashboardSkeleton } from "./dashboard-skeleton";
 import ProductSkeletonLoader from "./product-skeleton-loader";
 import Products from "./products";
+import OrdersSkeleton from "./order-skeleton";
 
 export {
   Header,
@@ -48,4 +49,5 @@ export {
   DashboardSkeleton,
   ProductSkeletonLoader,
   Products,
+  OrdersSkeleton,
 };
