@@ -1,11 +1,3 @@
-// import { Orders } from "@/components";
-
-// const page = () => {
-//   return <Orders />;
-// };
-
-// export default page;
-
 import { Orders } from "@/components";
 import { Order, OrderItem } from "@prisma/client";
 import { getOrdersByUserId } from "actions/order.action";
