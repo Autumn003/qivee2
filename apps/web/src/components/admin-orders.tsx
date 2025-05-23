@@ -27,17 +27,63 @@ interface ExtendedOrderItem extends OrderItem {
   image: string;
 }
 
-interface OrderWithItems extends Order {
+interface ShippingAddress {
+  name: string;
+  house: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  mobile: string;
+}
+
+interface OrderWithItems extends Omit<Order, "shippingAddress"> {
   items: ExtendedOrderItem[];
-  shippingAddress: {
-    name: string;
-    house: string;
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-    mobile: string;
+  shippingAddress: ShippingAddress;
+}
+
+// Helper function to safely parse shipping address
+function parseShippingAddress(
+  shippingAddress: any,
+  order: Order
+): ShippingAddress {
+  // If shippingAddress is already a properly structured object
+  if (
+    shippingAddress &&
+    typeof shippingAddress === "object" &&
+    !Array.isArray(shippingAddress)
+  ) {
+    return {
+      name: shippingAddress.name || order.shippingName || "",
+      house: shippingAddress.house || order.shippingHouse || "",
+      street: shippingAddress.street || order.shippingStreet || "",
+      city: shippingAddress.city || order.shippingCity || "",
+      state: shippingAddress.state || order.shippingState || "",
+      zipCode: shippingAddress.zipCode || order.shippingZipCode || "",
+      country: shippingAddress.country || order.shippingCountry || "",
+      mobile: shippingAddress.mobile || order.shippingMobile || "",
+    };
+  }
+
+  // Fallback to individual fields from Order model
+  return {
+    name: order.shippingName || "",
+    house: order.shippingHouse || "",
+    street: order.shippingStreet || "",
+    city: order.shippingCity || "",
+    state: order.shippingState || "",
+    zipCode: order.shippingZipCode || "",
+    country: order.shippingCountry || "",
+    mobile: order.shippingMobile || "",
+  };
+}
+
+// Helper function to convert OrderWithItems back to Order for editing
+function convertToOrder(orderWithItems: OrderWithItems): Order {
+  return {
+    ...orderWithItems,
+    shippingAddress: orderWithItems.shippingAddress as any, // Cast to JsonValue
   };
 }
 
@@ -74,7 +120,7 @@ export default function AdminOrders({
         if (response.success) {
           const formattedOrders = response.orders.map((order) => ({
             ...order,
-            shippingAddress: order.shippingAddress || {},
+            shippingAddress: parseShippingAddress(order.shippingAddress, order),
             items: order.orderItems.map((orderItem) => ({
               id: orderItem.id,
               productId: orderItem.product.id,
@@ -400,7 +446,9 @@ export default function AdminOrders({
                         {user?.role === UserRole.ADMIN && (
                           <div className="mt-auto flex flex-wrap md:justify-normal justify-between gap-4 w-full">
                             <button
-                              onClick={() => setEditingOrder(order)}
+                              onClick={() =>
+                                setEditingOrder(convertToOrder(order))
+                              }
                               className="px-4 py-2 bg-primary-foreground text-primary-background rounded-md hover:bg-primary/90 cursor-pointer h-fit"
                             >
                               Edit Order
@@ -426,7 +474,7 @@ export default function AdminOrders({
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
-                                    Remove from wishlist?
+                                    Delete Order?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to delete order with
