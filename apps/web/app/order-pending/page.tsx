@@ -2,11 +2,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getOrderById } from "actions/order.action";
 
-export default function OrderPendingPage() {
+function OrderPendingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -131,7 +131,7 @@ export default function OrderPendingPage() {
               Return to Home
             </Link>
             <Link
-              href="/order-history"
+              href="/orders"
               className="px-6 py-3 border border-secondary-foreground text-secondary-foreground rounded-md"
             >
               View Order History
@@ -146,5 +146,28 @@ export default function OrderPendingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-lg mx-auto bg-card rounded-lg p-8 shadow-md">
+        <div className="text-center">
+          <div className="flex justify-center items-center mb-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+          <p className="text-secondary-foreground">Loading order details...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function OrderPendingPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <OrderPendingContent />
+    </Suspense>
   );
 }

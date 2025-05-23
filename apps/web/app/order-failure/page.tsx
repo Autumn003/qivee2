@@ -3,8 +3,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function OrderFailurePage() {
+function OrderFailureContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const reason = searchParams.get("reason") || "payment_failed";
@@ -62,5 +63,28 @@ export default function OrderFailurePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-lg mx-auto bg-card rounded-lg p-8 shadow-md">
+        <div className="text-center">
+          <div className="flex justify-center items-center mb-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+          <p className="text-secondary-foreground">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function OrderFailurePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <OrderFailureContent />
+    </Suspense>
   );
 }
