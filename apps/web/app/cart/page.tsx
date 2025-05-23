@@ -1,6 +1,8 @@
 import { Cart } from "@/components";
 import { getCart } from "actions/cart.action";
 
+export const dynamic = "force-dynamic";
+
 interface CartItemWithDetails {
   id: string;
   productId: string;

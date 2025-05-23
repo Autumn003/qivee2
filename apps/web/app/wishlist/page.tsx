@@ -1,6 +1,8 @@
 import { getWishlist } from "actions/wishlist.action";
 import Wishlist from "@/components/wishlist";
 
+export const dynamic = "force-dynamic";
+
 interface WishlistItemWithDetails {
   id: string;
   productId: string;
