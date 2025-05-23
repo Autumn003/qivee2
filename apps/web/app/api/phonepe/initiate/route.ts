@@ -30,10 +30,19 @@ export async function POST(req: Request) {
     console.log("Received payment request:", reqData);
 
     // Extract transaction details
-    const { userId, addressId, amount, name, mobile, items } = reqData;
+    const { userId, addressId, amount, name, mobile, items, shipping, tax } =
+      reqData;
 
     // Validate required fields
-    if (!userId || !addressId || !amount || !mobile || !items) {
+    if (
+      !userId ||
+      !addressId ||
+      !amount ||
+      !mobile ||
+      !items ||
+      shipping === undefined ||
+      tax === undefined
+    ) {
       return NextResponse.json(
         { success: false, error: "Missing required payment details" },
         { status: 400 }
@@ -57,7 +66,9 @@ export async function POST(req: Request) {
       userId,
       addressId,
       PaymentMethod.PHONEPE,
-      items
+      items,
+      shipping,
+      tax
     );
 
     if (!orderResponse.success) {

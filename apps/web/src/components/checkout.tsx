@@ -185,6 +185,8 @@ export default function Checkout() {
               productId: item.productId,
               quantity: item.quantity,
             })),
+            shipping,
+            tax,
           }
         );
 
