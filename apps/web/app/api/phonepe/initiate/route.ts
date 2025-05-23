@@ -61,6 +61,9 @@ export async function POST(req: Request) {
       formData.append(`items[${index}][quantity]`, item.quantity.toString());
     });
 
+    formData.append("shipping", shipping);
+    formData.append("tax", tax);
+
     // Create the order with PENDING status
     const orderResponse = await createOrder(
       userId,
