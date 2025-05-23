@@ -1,28 +1,18 @@
-// import { ProductDetails } from "@/components";
-
-// const page = () => {
-//   return <ProductDetails />;
-// };
-
-// export default page;
-
-// app/products/[id]/page.tsx
-
 import { getproductById } from "actions/product.action";
 import { ProductDetails } from "@/components";
 import { Product } from "@prisma/client";
 import { Metadata } from "next";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const productId = params.id;
+  const { id: productId } = await params;
   try {
     const response = await getproductById(productId);
     if (response.success && response.product) {
@@ -45,7 +35,7 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params }: PageProps) {
-  const productId = params.id;
+  const { id: productId } = await params;
   let product: Product | null = null;
 
   try {
