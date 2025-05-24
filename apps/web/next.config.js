@@ -3,6 +3,7 @@ const nextConfig = {
   images: {
     // domains: ["img.freepik.com"],
     remotePatterns: [{ hostname: "freepik.com" }],
+    domains: ["res.cloudinary.com"],
   },
   experimental: {
     serverActions: {

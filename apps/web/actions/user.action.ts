@@ -9,15 +9,26 @@ import { sendEmail } from "lib/mail";
 
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
-import { v2 as cloudinary } from "cloudinary";
 import { auth } from "../../web/lib/auth";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// Helper function to get configured Cloudinary instance
+async function getCloudinaryClient() {
+  try {
+    const { v2: cloudinary } = await import("cloudinary");
+
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true,
+    });
+
+    return cloudinary;
+  } catch (error) {
+    console.error("Failed to configure Cloudinary:", error);
+    throw new Error("Cloudinary configuration failed");
+  }
+}
 
 export async function createUser(formData: FormData) {
   const parsedData = registerSchema.safeParse(Object.fromEntries(formData));
@@ -37,26 +48,26 @@ export async function createUser(formData: FormData) {
     data: { name, email, password: hashedPassword },
   });
 
-  const message = `Hello ${name},  
+  const message = `Hello ${name},
 
-  Welcome to Qivee! 🎉  
-  
-  We're thrilled to have you join our community of savvy shoppers. Your journey to discovering amazing products, exclusive deals, and seamless shopping starts now!  
-  
-  🛍️ What You Can Expect:  
-  Exclusive discounts & offers  
-  A wide range of high-quality products  
-  Fast & secure checkout  
-  24/7 customer support  
-  
-  Start exploring now: www.qivee.com  
-  
-  If you have any questions, our support team is always here to help.  
-  
-  Happy shopping! 🛒  
-  Best Regards,  
-  The Qivee Team  
-  support@qivee.com | www.qivee.com  
+  Welcome to Qivee! 🎉
+
+  We're thrilled to have you join our community of savvy shoppers. Your journey to discovering amazing products, exclusive deals, and seamless shopping starts now!
+
+  🛍️ What You Can Expect:
+  Exclusive discounts & offers
+  A wide range of high-quality products
+  Fast & secure checkout
+  24/7 customer support
+
+  Start exploring now: www.qivee.com
+
+  If you have any questions, our support team is always here to help.
+
+  Happy shopping! 🛒
+  Best Regards,
+  The Qivee Team
+  support@qivee.com | www.qivee.com
   `;
 
   try {
@@ -116,54 +127,86 @@ export async function updateAvatar(id: string, file: File) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Save the file temporarily (optional, useful for debugging)
-  const tempPath = join("tmp", file.name);
-  await writeFile(tempPath, buffer);
+  // Create unique filename to avoid conflicts
+  const uniqueFilename = `${Date.now()}-${file.name}`;
+  const tempPath = join("tmp", uniqueFilename);
+
+  try {
+    await writeFile(tempPath, buffer);
+  } catch (error) {
+    console.error("Failed to write temp file:", error);
+    return { error: { message: "File processing failed" } };
+  }
 
   const user = await db.user.findUnique({ where: { id } });
   if (!user) {
+    // Clean up temp file
+    try {
+      await unlink(tempPath);
+    } catch (unlinkError) {
+      console.error("Failed to clean up temp file:", unlinkError);
+    }
     return { error: { id: "User not found" } };
   }
 
   try {
+    // Get Cloudinary client with dynamic import
+    const cloudinary = await getCloudinaryClient();
+
+    // Delete old avatar if exists
     if (user.avatar) {
-      const publicId = user.avatar.split("/").pop()?.split(".")[0]; // Extract public ID
-      if (publicId) {
-        await cloudinary.uploader.destroy(`avatars/${publicId}`);
+      try {
+        const publicId = user.avatar.split("/").pop()?.split(".")[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(`avatars/${publicId}`);
+        }
+      } catch (deleteError) {
+        console.error("Failed to delete old avatar:", deleteError);
+        // Continue with upload even if deletion fails
       }
     }
 
+    // Upload new avatar
     const result = await cloudinary.uploader.upload(tempPath, {
       folder: "avatars",
       resource_type: "image",
       crop: "scale",
       width: 150,
+      quality: "auto",
     });
 
+    // Clean up temp file
     await unlink(tempPath);
 
+    // Update user in database
     const updatedUser = await db.user.update({
       where: { id },
       data: { avatar: result.secure_url },
     });
-    console.log("update user: ", updatedUser);
+
+    console.log("Avatar updated successfully for user:", updatedUser.id);
+
     return {
       success: true,
       avatarUrl: result.secure_url,
       updatedUser,
       message: "User avatar updated successfully",
     };
-  } catch (error) {
-    console.error("Cloudinary upload failed", error);
+  } catch (error: any) {
+    console.error("Avatar update failed:", error);
 
-    // Ensure local file is deleted even if upload fails
+    // Ensure temp file is deleted even if upload fails
     try {
       await unlink(tempPath);
     } catch (unlinkError) {
       console.error("Failed to delete temporary file:", unlinkError);
     }
 
-    return { error: { message: "Avatar upload failed" } };
+    return {
+      error: {
+        message: error.message || "Avatar upload failed",
+      },
+    };
   }
 }
 
@@ -195,9 +238,9 @@ ${resetPasswordURL}
 
 For any help, feel free to reach out to our support team.
 
-Stay safe,  
-The Qivee Team  
-support@qivee.com | www.qivee.com  
+Stay safe,
+The Qivee Team
+support@qivee.com | www.qivee.com
 `;
 
   await sendEmail({
@@ -241,8 +284,8 @@ export async function resetPassword(token: string, newPassword: string) {
 
     If you have any questions, feel free to reach out to us.
 
-    Best Regards,  
-      The Qivee Team  
+    Best Regards,
+      The Qivee Team
       support@qivee.com | www.qivee.com
     `;
 
@@ -303,8 +346,8 @@ export async function updatePassword(oldPassword: string, newPassword: string) {
 
   If you have any questions, feel free to reach out to us.
 
-  Best Regards,  
-    The Qivee Team  
+  Best Regards,
+    The Qivee Team
     support@qivee.com | www.qivee.com
   `;
 
