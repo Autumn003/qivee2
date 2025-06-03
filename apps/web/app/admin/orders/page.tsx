@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AdminOrders } from "@/components";
 import { Order, OrderItem } from "@prisma/client";
 import { getAllOrders } from "actions/order.action";

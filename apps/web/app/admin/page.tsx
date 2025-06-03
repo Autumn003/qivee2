@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AdminDashboard } from "@/components";
 import { getAllOrders } from "actions/order.action";
 import { getAllUsers } from "actions/user.action";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getAllProducts } from "actions/product.action";
 import { AdminProducts } from "@/components";
 import { Product } from "@prisma/client";
