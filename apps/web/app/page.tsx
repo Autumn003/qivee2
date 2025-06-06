@@ -3,7 +3,7 @@ import { FeaturedProducts } from "@/components";
 export default function Home() {
   const heroSlides = [
     {
-      url: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+      url: "/media/banner1.jpeg",
       title: "Bagpacks",
       description: "Carry your essentials in style with our premium backpacks.",
       cta: {
@@ -12,7 +12,7 @@ export default function Home() {
       },
     },
     {
-      url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+      url: "/media/banner2.jpg",
       title: "Miobile Accessories",
       description:
         "Enhance your mobile experience with top-quality accessories.",
@@ -22,7 +22,7 @@ export default function Home() {
       },
     },
     {
-      url: "/media/baby.jpg",
+      url: "/media/banner3.png",
       title: "Baby Products",
       description: "Ensure comfort and care with our premium baby products.",
       cta: {
@@ -34,22 +34,22 @@ export default function Home() {
   const categories = [
     {
       name: "All",
-      image: "https://images.unsplash.com/photo-1488161628813-04466f872be2",
+      image: "/media/all.png",
       target: "/products",
     },
     {
       name: "Women Bagpacks",
-      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
+      image: "/media/backpack.png",
       target: "/products?category=women-bagpacks",
     },
     {
       name: "Mobile Accessories",
-      image: "https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93",
+      image: "/media/mobile.png",
       target: "/products?category=mobile-accessories",
     },
     {
       name: "Baby Products",
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
+      image: "/media/baby.png",
       target: "/products?category=baby-products",
     },
   ];
@@ -110,7 +110,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="h-96 mb-20">
+      <section className="md:h-96 h-64 mb-20">
         <Carousel slides={heroSlides} className="h-full w-full" />
       </section>
 
