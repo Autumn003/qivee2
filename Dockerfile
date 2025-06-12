@@ -20,5 +20,6 @@ RUN npm run db:generate
 # build the application
 RUN npm run build
 
+EXPOSE 3000
 # Start the application
 CMD ["npm", "run", "start-app"]
