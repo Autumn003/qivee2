@@ -39,4 +39,4 @@ jobs:
             sudo docker pull hemant003/qivee:latest
             sudo docker stop qivee || true
             sudo docker rm qivee || true
-            sudo docker run -d --name qivee -p 3005:3000 hemant003/qivee:latest
+            sudo docker run -d --name qivee -p 3000:3000 hemant003/qivee:latest
