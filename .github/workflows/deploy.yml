@@ -28,3 +28,15 @@ jobs:
 
       - name: Verify Pushed Image
         run: docker pull hemant003/qivee:latest
+
+      - name: Deoloy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo docker pull hemant003/qivee:latest
+            sudo docker stop qivee || true
+            sudo docker rm qivee || true
+            sudo docker run -d --name qivee -p 3005:3000 hemant003/qivee:latest
