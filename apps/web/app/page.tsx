@@ -4,21 +4,21 @@ export default function Home() {
   const heroSlides = [
     {
       url: "/media/banner1.jpeg",
-      title: "Bagpacks",
+      title: "Backpacks",
       description: "Carry your essentials in style with our premium backpacks.",
       cta: {
         text: "Shop Now",
-        link: "/products?category=women-bagpacks",
+        link: "/products?category=backpacks",
       },
     },
     {
       url: "/media/banner2.jpg",
-      title: "Miobile Accessories",
+      title: "Mobile Accessories",
       description:
         "Enhance your mobile experience with top-quality accessories.",
       cta: {
         text: "Explore Collection",
-        link: "/products?category=mobile-accessories",
+        link: "/products?category=mobile_accessories",
       },
     },
     {
@@ -27,7 +27,7 @@ export default function Home() {
       description: "Ensure comfort and care with our premium baby products.",
       cta: {
         text: "Explore Collection",
-        link: "/products?category=baby-products",
+        link: "/products?category=baby_products",
       },
     },
   ];
@@ -38,19 +38,19 @@ export default function Home() {
       target: "/products",
     },
     {
-      name: "Women Bagpacks",
+      name: "Backpacks",
       image: "/media/backpack.png",
-      target: "/products?category=women-bagpacks",
+      target: "/products?category=backpacks",
     },
     {
       name: "Mobile Accessories",
       image: "/media/mobile.png",
-      target: "/products?category=mobile-accessories",
+      target: "/products?category=mobile_accessories",
     },
     {
       name: "Baby Products",
       image: "/media/baby.png",
-      target: "/products?category=baby-products",
+      target: "/products?category=baby_products",
     },
   ];
 
@@ -86,8 +86,8 @@ export default function Home() {
       icon: "ri-refresh-line",
       title: "Easy Returns",
       description:
-        "Hassle-free 15-day returns with our no-questions-asked policy",
-      stat: "15",
+        "Hassle-free 7-day returns with our no-questions-asked policy",
+      stat: "7",
       statLabel: "Day Returns",
     },
     {
