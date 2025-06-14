@@ -147,7 +147,7 @@ enum UserRole {
 enum productCategory {
   baby_products
   mobile_accessories
-  women_bagpacks
+  backpacks
 }
 
 enum PaymentStatus {
