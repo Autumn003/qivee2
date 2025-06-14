@@ -236,7 +236,7 @@ export default function AdminProducts({
               <option value="All">All Categories</option>
               <option value="baby_products">Baby Products</option>
               <option value="mobile_accessories">Mobile Accessories</option>
-              <option value="women_bagpacks">Women Bagpacks</option>
+              <option value="backpacks">Backpacks</option>
             </select>
 
             <select
@@ -471,7 +471,7 @@ export default function AdminProducts({
                           <option value="mobile_accessories">
                             Mobile Accessories
                           </option>
-                          <option value="women_bagpacks">Women Bagpacks</option>
+                          <option value="backpacks">Backpacks</option>
                         </select>
                         {form.formState.errors.category && (
                           <p className="mt-1 text-sm text-destructive">

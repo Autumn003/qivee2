@@ -21,8 +21,8 @@ const Dropdown = ({
       target: "/products",
     },
     {
-      name: "Women’s Backpack",
-      target: "/products?category=women_bagpacks",
+      name: "Backpack",
+      target: "/products?category=backpacks",
     },
     {
       name: "Baby products",

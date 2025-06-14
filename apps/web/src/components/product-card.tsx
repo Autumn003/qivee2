@@ -63,7 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <div
               className={cn(
                 "border-t-12 border-b-12 border-l-12 border-r-12",
-                category === productCategory.women_bagpacks &&
+                category === productCategory.backpacks &&
                   "border-emerald-300/30",
                 category === productCategory.baby_products &&
                   "border-cyan-300/30",
@@ -75,7 +75,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <div
               className={cn(
                 "text-xs px-2 py-1 flex items-center",
-                category === productCategory.women_bagpacks &&
+                category === productCategory.backpacks &&
                   "text-emerald-700 bg-emerald-300/30",
                 category === productCategory.baby_products &&
                   "text-cyan-500 bg-cyan-300/30",
