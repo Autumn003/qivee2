@@ -25,6 +25,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: hemant003/qivee:latest
+          no-cache: true
 
       - name: Verify Pushed Image
         run: docker pull hemant003/qivee:latest
