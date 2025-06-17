@@ -250,6 +250,8 @@ export async function cancelOrder(orderId: string, userId: string) {
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
+  shippingID: string,
+  shippingPartner: string,
   userRole: UserRole
 ) {
   if (!orderId || !status) {
@@ -272,7 +274,7 @@ export async function updateOrderStatus(
 
   const updatedOrder = await db.order.update({
     where: { id: orderId },
-    data: { status },
+    data: { status, shippingID, shippingPartner },
   });
 
   const emailMessage = getOrderStatusMessage(order.user.name, order.id, status);

@@ -84,6 +84,8 @@ function convertToOrder(orderWithItems: OrderWithItems): Order {
   return {
     ...orderWithItems,
     shippingAddress: orderWithItems.shippingAddress as any, // Cast to JsonValue
+    shippingID: orderWithItems.shippingID || "",
+    shippingPartner: orderWithItems.shippingPartner || "",
   };
 }
 
@@ -181,14 +183,22 @@ export default function AdminOrders({
 
   const handleStatusChange = async (
     orderId: string,
-    newStatus: OrderStatus
+    newStatus: OrderStatus,
+    shippingID: string,
+    shippingPartner: string
   ) => {
     if (!user || user.role !== UserRole.ADMIN) {
       toast.error("Unauthorized action");
       return;
     }
     setIsLoading(true);
-    const response = await updateOrderStatus(orderId, newStatus, user.role);
+    const response = await updateOrderStatus(
+      orderId,
+      newStatus,
+      shippingID,
+      shippingPartner,
+      user.role
+    );
     if (response.success) {
       toast.success("Order status updated successfully");
       setOrders((prevOrders) =>
@@ -337,29 +347,70 @@ export default function AdminOrders({
                   {editingOrder?.id === order.id ? (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="font-medium mb-4">Order Status</h3>
-                          <select
-                            value={editingOrder.status}
-                            onChange={(e) =>
-                              setEditingOrder({
-                                ...editingOrder,
-                                status: e.target.value as OrderStatus,
-                              })
-                            }
-                            className="w-full px-3 py-2 border border-muted-foreground rounded-md bg-primary-background"
-                          >
-                            <option value={OrderStatus.PROCESSING}>
-                              Processing
-                            </option>
-                            <option value={OrderStatus.SHIPPED}>Shipped</option>
-                            <option value={OrderStatus.DELIVERED}>
-                              Delivered
-                            </option>
-                            <option value={OrderStatus.CANCELLED}>
-                              Cancelled
-                            </option>
-                          </select>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block font-medium mb-2">
+                              Order Status
+                            </label>
+                            <select
+                              value={editingOrder.status}
+                              onChange={(e) =>
+                                setEditingOrder({
+                                  ...editingOrder,
+                                  status: e.target.value as OrderStatus,
+                                })
+                              }
+                              className="w-full px-3 py-2 border border-muted-foreground rounded-md bg-primary-background"
+                            >
+                              <option value={OrderStatus.PROCESSING}>
+                                Processing
+                              </option>
+                              <option value={OrderStatus.SHIPPED}>
+                                Shipped
+                              </option>
+                              <option value={OrderStatus.DELIVERED}>
+                                Delivered
+                              </option>
+                              <option value={OrderStatus.CANCELLED}>
+                                Cancelled
+                              </option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block font-medium mb-2">
+                              Shipping ID
+                            </label>
+                            <input
+                              value={editingOrder.shippingID || ""}
+                              onChange={(e) =>
+                                setEditingOrder({
+                                  ...editingOrder,
+                                  shippingID: e.target.value,
+                                })
+                              }
+                              type="text"
+                              placeholder="Enter shipping ID"
+                              className="w-full px-3 py-2 border border-muted-foreground rounded-md bg-primary-background"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-medium mb-2">
+                              Shipping Partner
+                            </label>
+                            <input
+                              value={editingOrder.shippingPartner || ""}
+                              onChange={(e) =>
+                                setEditingOrder({
+                                  ...editingOrder,
+                                  shippingPartner: e.target.value,
+                                })
+                              }
+                              type="text"
+                              placeholder="Enter shipping partner"
+                              className="w-full px-3 py-2 border border-muted-foreground rounded-md bg-primary-background"
+                            />
+                          </div>
                         </div>
                       </div>
                       <div className="flex justify-end space-x-4">
@@ -373,7 +424,12 @@ export default function AdminOrders({
                         </button>
                         <button
                           onClick={() =>
-                            handleStatusChange(order.id, editingOrder.status)
+                            handleStatusChange(
+                              order.id,
+                              editingOrder.status,
+                              editingOrder.shippingID || "",
+                              editingOrder.shippingPartner || ""
+                            )
                           }
                           className="px-4 py-2 bg-green-500/70 hover:bg-green-500 transition-colors duration-150 text-white rounded-md flex items-center space-x-2 cursor-pointer"
                           disabled={isLoading}
