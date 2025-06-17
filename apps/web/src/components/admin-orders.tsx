@@ -462,6 +462,25 @@ export default function AdminOrders({
                           </p>
                         </div>
                       </div>
+                      {order.shippingID && order.shippingID.length > 0 && (
+                        <div>
+                          <strong>Shipping</strong>{" "}
+                          <div className="text-secondary-foreground text-sm">
+                            <p>
+                              <span className="text-primary-foreground">
+                                ID:{" "}
+                              </span>
+                              {order.shippingID}
+                            </p>
+                            <p>
+                              <span className="text-primary-foreground">
+                                Provider:{" "}
+                              </span>
+                              {order.shippingPartner}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <h4 className="text-lg font-semibold mt-4">Items</h4>
                       {/* Order Items */}
                       <div className="space-y-4">

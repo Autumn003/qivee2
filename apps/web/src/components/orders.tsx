@@ -317,6 +317,25 @@ export default function Orders({
                         </p>
                       </div>
                     </div>
+                    {order.shippingID && order.shippingID.length > 0 && (
+                      <div>
+                        <strong>Shipping</strong>{" "}
+                        <div className="text-secondary-foreground text-sm">
+                          <p>
+                            <span className="text-primary-foreground">
+                              ID:{" "}
+                            </span>
+                            {order.shippingID}
+                          </p>
+                          <p>
+                            <span className="text-primary-foreground">
+                              Provider:{" "}
+                            </span>
+                            {order.shippingPartner}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Order Items */}
