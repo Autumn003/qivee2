@@ -304,13 +304,13 @@ export default function FAQ() {
               <i className="ri-mail-line text-xl mr-2"></i>
               Email Support
             </Link>
-            {/* <Link
-              href="/"
+            <Link
+              href="https://wa.me/8448820500"
               className="inline-flex items-center px-6 py-3 border border-muted-foreground rounded-lg hover:bg-secondary font-medium"
             >
               <i className="ri-whatsapp-line text-xl mr-2"></i>
               WhatsApp Us
-            </Link> */}
+            </Link>
           </div>
         </div>
       </div>
