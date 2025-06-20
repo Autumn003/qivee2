@@ -34,7 +34,7 @@ export default function Footer() {
               <i className="ri-map-pin-line"></i>
               <p>
                 Office no.27, Rc plaza Ground floor, Kirari Suleman Nagar, Dli -
-                110041
+                110086
               </p>
             </div>
             <div className="flex gap-2">
