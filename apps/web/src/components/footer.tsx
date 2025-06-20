@@ -6,13 +6,13 @@ export default function Footer() {
     <div className="border-muted-background border-t px-8">
       <div className="flex flex-col gap-10 py-14 md:flex-row md:gap-0">
         <div className="w-full">
-          <Link href="/" className="col-span-2 flex items-center gap-2">
+          <Link href="/" className="col-span-2 flex items-center gap-1">
             <Image
               src="/media/logo.webp"
               alt="logo"
               width={40}
               height={40}
-              className="rounded-xl dark:invert"
+              className="rounded-xl"
             />
             <div className="-mb-1 flex items-end gap-1">
               <div className="-mb-1 flex items-end gap-1">

@@ -23,9 +23,9 @@ export const Header = () => {
             alt="logo"
             width={28}
             height={28}
-            className="rounded-lg dark:invert"
+            className="rounded-lg bg-primary-background p-0.5"
           />
-          <div className="-mb-1 flex items-end gap-1">
+          <div className="flex items-end gap-1">
             <div className="-mb-1 flex items-end gap-1">
               <h1 className="text-primary-foreground text-2xl font-semibold">
                 Qivee
@@ -90,7 +90,7 @@ export const Header = () => {
                 alt="logo"
                 width={28}
                 height={28}
-                className="h-fit rounded-lg dark:invert"
+                className="h-fit rounded-lg bg-primary-background p-0.5"
               />
               <div className="text-accent-foreground -mb-1 flex items-end gap-1">
                 <h1 className="text-primary-foreground text-2xl font-semibold">
@@ -158,7 +158,7 @@ export const Header = () => {
               alt="logo"
               width={28}
               height={28}
-              className="rounded-lg dark:invert"
+              className="rounded-lg bg-primary-background p-0.5"
             />
           </Link>
           <button onClick={handleMenuOpner}>
