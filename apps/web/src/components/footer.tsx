@@ -32,15 +32,18 @@ export default function Footer() {
             </p>
             <div className="flex gap-2">
               <i className="ri-map-pin-line"></i>
-              <p>123 Commerce St, Shopping City</p>
+              <p>
+                Office no.27, Rc plaza Ground floor, Kirari Suleman Nagar, Dli -
+                110041
+              </p>
             </div>
             <div className="flex gap-2">
               <i className="ri-phone-line"></i>
-              <p>+1 (555) 123-4567</p>
+              <p>+91 8448-820-500</p>
             </div>
             <div className="flex gap-2">
               <i className="ri-mail-line"></i>
-              <p>support@qivee.com</p>
+              <p>help.qivee@gmail.com</p>
             </div>
           </div>
         </div>
@@ -58,16 +61,16 @@ export default function Footer() {
                 New Arrivals
               </Link>
               <Link
-                href="/trending"
+                href="/featured"
                 className="hover:text-primary-foreground transition-colors duration-200"
               >
-                Trending
+                Featured
               </Link>
               <Link
-                href="/accesories"
+                href="/orders"
                 className="hover:text-primary-foreground transition-colors duration-200"
               >
-                Accesories
+                My Orders
               </Link>
             </div>
           </div>
@@ -76,26 +79,26 @@ export default function Footer() {
               <h1 className="text-primary-foreground text-xl font-semibold">
                 Customer Service
               </h1>
-              <Link
-                href="/"
+              <a
+                href="mailto:help.qivee@gmail.com"
                 target="_blank"
                 className="hover:text-primary-foreground transition-colors duration-200"
               >
-                Return & Exchange
+                Email us
+              </a>
+              <Link
+                href="https://wa.me/8448820500"
+                target="_blank"
+                className="hover:text-primary-foreground transition-colors duration-200"
+              >
+                WhatsApp us
               </Link>
               <Link
-                href="/"
+                href="/faq"
                 target="_blank"
                 className="hover:text-primary-foreground transition-colors duration-200"
               >
                 FAQ
-              </Link>
-              <Link
-                href="/"
-                target="_blank"
-                className="hover:text-primary-foreground transition-colors duration-200"
-              >
-                Shipping Info
               </Link>
             </div>
           </div>

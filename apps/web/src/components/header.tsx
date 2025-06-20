@@ -38,7 +38,12 @@ export const Header = () => {
         </Link>
         <div className="col-span-8 flex items-center gap-8 px-4 text-[15px] font-semibold">
           <Dropdown />
-
+          <Link
+            href="/products"
+            className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
+          >
+            All Products
+          </Link>
           <Link
             href="/new-arrivals"
             className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer "
@@ -50,12 +55,6 @@ export const Header = () => {
             className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
           >
             Featured
-          </Link>
-          <Link
-            href="/accesories"
-            className="text-secondary-foreground hover:text-primary-foreground transition-colors duration-200 hover:cursor-pointer"
-          >
-            Accesories
           </Link>
         </div>
         <div className="col-span-2 flex items-center justify-around">

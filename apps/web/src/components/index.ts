@@ -23,6 +23,7 @@ import { DashboardSkeleton } from "./dashboard-skeleton";
 import ProductSkeletonLoader from "./product-skeleton-loader";
 import Products from "./products";
 import OrdersSkeleton from "./order-skeleton";
+import FAQ from "./faq";
 
 export {
   Header,
@@ -50,4 +51,5 @@ export {
   ProductSkeletonLoader,
   Products,
   OrdersSkeleton,
+  FAQ,
 };
