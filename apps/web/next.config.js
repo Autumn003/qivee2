@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // domains: ["img.freepik.com"],
-    remotePatterns: [{ hostname: "freepik.com" }],
-    remotePatterns: [{ hostname: "res.cloudinary.com" }],
+    remotePatterns: [
+      { hostname: "res.cloudinary.com" },
+      { hostname: "ik.imagekit.io" },
+    ],
   },
   experimental: {
     serverActions: {
