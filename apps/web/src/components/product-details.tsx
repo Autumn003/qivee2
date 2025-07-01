@@ -195,7 +195,7 @@ export default function ProductDetails({
                 </div>
               </div>
 
-              <p className="text-secondary-foreground leading-relaxed">
+              <p className="text-secondary-foreground leading-relaxed whitespace-pre-line">
                 {product?.description && (
                   <>
                     {isMobileView && !showFullDescription
