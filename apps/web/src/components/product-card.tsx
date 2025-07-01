@@ -90,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="p-4">
           <div className="h-24">
             <Link href={`/products/${id}`}>
-              <h3 className="text-lg font-semibold">{name}</h3>
+              <h3 className="text-lg font-semibold line-clamp-2">{name}</h3>
               <p className="text-gray-600 text-sm mt-2 line-clamp-2">
                 {description}
               </p>

@@ -18,7 +18,7 @@ const FeaturedCard = ({ title, imageURL, price }: featuredCardProps) => {
         </button>
       </div>
       <div className="p-4">
-        <h3 className="font-medium mb-2">{title}</h3>
+        <h3 className="font-medium mb-2 line-clamp-2 h-12">{title}</h3>
         <p className="text-secondary-foreground">₹{price}</p>
       </div>
     </div>
